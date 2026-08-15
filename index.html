@@ -114,7 +114,23 @@
     .cal-day.weekend { background: var(--weekend-bg); color: var(--text2); }
     .cal-day.festiu { background: var(--festiu-bg); color: var(--orange); font-weight: 700; border-color: #fed7aa; }
     .cal-day.has-reg { border: 2px solid var(--accent); background: #eff6ff; font-weight: 700; }
-    .day-item.has-reg { border: 2px solid var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .day-item.has-reg { border-width: 2px; }
+
+    .cal-day.t-mati, .day-item.t-mati { background: #dbeafe !important; border-color: #2563eb !important; }
+    .cal-day.t-tarda, .day-item.t-tarda { background: #fef9c3 !important; border-color: #ca8a04 !important; }
+    .cal-day.t-nit, .day-item.t-nit { background: #e0e7ff !important; border-color: #4f46e5 !important; }
+    .cal-day.t-cs_dia, .day-item.t-cs_dia { background: #ffedd5 !important; border-color: #ea580c !important; }
+    .cal-day.t-cs_nit, .day-item.t-cs_nit { background: #fce7f3 !important; border-color: #db2777 !important; }
+    .cal-day.t-fd, .day-item.t-fd { background: #fef3c7 !important; border-color: #d97706 !important; }
+    .cal-day.t-fn, .day-item.t-fn { background: #fce7f3 !important; border-color: #9d174d !important; }
+    .cal-day.t-vacances, .day-item.t-vacances { background: #dcfce7 !important; border-color: #16a34a !important; }
+    .cal-day.t-assumptes, .day-item.t-assumptes { background: #ecfdf5 !important; border-color: #059669 !important; }
+    .cal-day.t-baixa, .day-item.t-baixa { background: #fee2e2 !important; border-color: #dc2626 !important; }
+    .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #cffafe !important; border-color: #0891b2 !important; }
+    .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #ede9fe !important; border-color: #7c3aed !important; }
+    .cal-day.t-altres, .day-item.t-altres { background: #f1f5f9 !important; border-color: #64748b !important; }
+    .cal-day.t-judici, .day-item.t-judici { background: #fef3c7 !important; border-color: #b45309 !important; }
+
     .cal-day.selected { background: #dbeafe; border-color: var(--accent); }
     .cal-day .dot { position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
     .legend-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.7rem; margin: 8px 0 12px; color: var(--text2); }
@@ -158,20 +174,20 @@
     <div class="card">
       <div class="card-title">Vacances i permisos</div>
       <div class="stats">
-        <div class="stat green"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances rest.</div></div>
-        <div class="stat cyan"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes rest.</div></div>
-        <div class="stat red"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances usades</div></div>
-        <div class="stat purple"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes usats</div></div>
+        <div class="stat green"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades</div></div>
+        <div class="stat cyan"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats</div></div>
         <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
+        <div class="stat purple"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances restants</div></div>
+        <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Guàrdies</div>
       <div class="stats">
-        <div class="stat cyan"><div class="value" id="stat-gnp-rest">0</div><div class="label">GNP rest.</div></div>
-        <div class="stat pink"><div class="value" id="stat-gnit-rest">0</div><div class="label">G. Nit rest.</div></div>
-        <div class="stat blue"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP usades</div></div>
-        <div class="stat purple"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit usades</div></div>
+        <div class="stat cyan"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP realitzades</div></div>
+        <div class="stat pink"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit realitzades</div></div>
+        <div class="stat blue"><div class="value" id="stat-gnp-rest">0</div><div class="label">GNP restants</div></div>
+        <div class="stat purple"><div class="value" id="stat-gnit-rest">0</div><div class="label">G. Nit restants</div></div>
       </div>
     </div>
     <div class="card">
@@ -287,9 +303,10 @@
         <label>Torn</label>
         <select id="edit-torn"></select>
         <div class="form-row">
-          <div><label>Entrada</label><input type="time" id="edit-entrada"></div>
-          <div><label>Sortida</label><input type="time" id="edit-sortida"></div>
+          <div><label>Entrada (HH:MM)</label><input type="text" id="edit-entrada" placeholder="07:00" pattern="[0-2][0-9]:[0-5][0-9]" inputmode="numeric"></div>
+          <div><label>Sortida (HH:MM)</label><input type="text" id="edit-sortida" placeholder="14:30" pattern="[0-2][0-9]:[0-5][0-9]" inputmode="numeric"></div>
         </div>
+        <div class="hint">Escriu l'hora en format 07:00 o 14:30</div>
         <label>Hores reals treballades</label>
         <input type="number" id="edit-hores" min="0" max="24" step="0.25" value="7.5">
         <div class="hint">Si fas més hores de les del torn, l'excés va a hores acumulades</div>
@@ -312,7 +329,7 @@
         <button class="modal-close" onclick="tancarModalJudici()">×</button>
       </div>
       <label>Data</label><input type="date" id="j-data">
-      <label>Hora</label><input type="time" id="j-hora">
+      <label>Hora (HH:MM)</label><input type="text" id="j-hora" placeholder="09:30" pattern="[0-2][0-9]:[0-5][0-9]" inputmode="numeric">
       <label>Jutjat</label><input type="text" id="j-jutjat" placeholder="Ex: Jutjat Penal 3 Barcelona">
       <label>Sala</label><input type="text" id="j-sala" placeholder="Ex: Sala 2">
       <label>Procediment</label><input type="text" id="j-procediment" placeholder="Núm. procediment">
@@ -509,18 +526,17 @@ function renderCalendariAnual(){
       let cls="cal-day";
       if(esCapDeSetmana(d)) cls+=" weekend";
       if(esFestiu(clau)) cls+=" festiu";
-      if(estat.registres[clau]?.tipus) cls+=" has-reg";
+      const rg=estat.registres[clau];
+      const hasJud=estat.judicis.some(j=>j.data===clau);
+      if(rg?.tipus) cls+=" has-reg";
+      if(hasJud) cls+=" has-reg t-judici";
       if(seleccionats.has(clau)) cls+=" selected";
       let ab="";
-      const rg=estat.registres[clau];
-      if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; }
-      else if(rg?.tipus==="vacances") ab="Vac";
-      else if(rg?.tipus==="assumptes") ab="AP";
-      else if(rg?.tipus==="baixa") ab="Bxa";
-      else if(rg?.tipus==="guardia_np") ab="GNP";
-      else if(rg?.tipus==="guardia_nit") ab="GN";
-      else if(rg?.tipus==="altres") ab="Alt";
-      html+=`<div class="${cls}" onclick="clickDiaCal('${clau}')"><span>${dia}</span>${ab?`<span style="position:absolute;bottom:1px;left:0;right:0;font-size:0.5rem;font-weight:700;line-height:1;color:var(--accent)">${ab}</span>`:""}</div>`;
+      if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; if(tn) cls+=" t-"+tn.id; }
+      else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","baixa":"Bxa","guardia_np":"GNP","guardia_nit":"GN","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
+      if(hasJud && !ab) ab="J";
+      else if(hasJud && ab) ab=ab+"/J";
+      html+=`<div class="${cls}" onclick="clickDiaCal('${clau}')"><span>${dia}</span>${ab?`<span style="position:absolute;bottom:1px;left:0;right:0;font-size:0.5rem;font-weight:700;line-height:1">${ab}</span>`:""}</div>`;
     }
     html+=`</div></div>`;
   });
@@ -547,7 +563,13 @@ function renderMes(){
     if(esCapDeSetmana(d)) extraClass+=" weekend";
     if(esFestiu(clau)) extraClass+=" festiu";
     if(seleccionats.has(clau)) extraClass+=" selected";
-    if(reg?.tipus) extraClass+=" has-reg";
+    if(reg?.tipus){
+      extraClass+=" has-reg";
+      if(reg.tipus==="treball"){ const tn=getTorn(reg.torn); if(tn) extraClass+=" t-"+tn.id; }
+      else extraClass+=" t-"+reg.tipus;
+    }
+    const hasJudM=estat.judicis.some(j=>j.data===clau);
+    if(hasJudM) extraClass+=" has-reg t-judici";
     const judicisDia=estat.judicis.filter(j=>j.data===clau);
     if(judicisDia.length) detail+=judicisDia.map(j=>`⚖️ ${j.hora||''} ${j.jutjat||''} ${j.sala||''}`).join(" · ");
     if(reg?.tipus){
@@ -761,10 +783,10 @@ function renderCfgTorns(){
       </div>
       <div class="form-row">
         <div><label>Hores</label><input type="number" id="torn-hores-${i}" value="${t.hores}" step="0.25"></div>
-        <div><label>Inici</label><input type="time" id="torn-inici-${i}" value="${t.inici}"></div>
+        <div><label>Inici (HH:MM)</label><input type="text" id="torn-inici-${i}" value="${t.inici}" placeholder="07:00"></div>
       </div>
       <div class="form-row">
-        <div><label>Fi</label><input type="time" id="torn-fi-${i}" value="${t.fi}"></div>
+        <div><label>Fi (HH:MM)</label><input type="text" id="torn-fi-${i}" value="${t.fi}" placeholder="14:30"></div>
         <div style="display:flex;align-items:flex-end"><button class="btn btn-sm btn-danger" onclick="eliminarTorn(${i})">Eliminar</button></div>
       </div>
     </div>`).join("");
