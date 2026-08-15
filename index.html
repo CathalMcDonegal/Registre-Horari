@@ -167,9 +167,11 @@
       <div class="stats">
         <div class="stat blue"><div class="value" id="stat-treballades">0</div><div class="label">Hores treballades</div></div>
         <div class="stat green"><div class="value" id="stat-restants">1580</div><div class="label">Hores restants</div></div>
-        <div class="stat purple"><div class="value" id="stat-percent">0%</div><div class="label">Completat</div></div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="progress-anual" style="width:0%"></div></div>
+      <div style="margin-top:10px">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">Progrés del còmput anual</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-anual" style="width:0%"></div></div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">Vacances i permisos</div>
@@ -504,7 +506,6 @@ function actualitzarVistaAnual(){
   const acumUsades = r.acumUsades || 0;
   const elAcumU = document.getElementById("stat-acum-usades");
   if(elAcumU) elAcumU.textContent = acumUsades;
-  document.getElementById("stat-percent").textContent=r.percent+"%";
   document.getElementById("progress-anual").style.width=Math.min(r.percent,100)+"%";
   document.getElementById("stat-vac-rest").textContent=r.vacRestants;
   document.getElementById("stat-pers-rest").textContent=r.persRestants;
