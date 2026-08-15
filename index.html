@@ -174,20 +174,25 @@
     <div class="card">
       <div class="card-title">Vacances i permisos</div>
       <div class="stats">
+        <div class="stat purple"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances restants</div></div>
         <div class="stat green"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades</div></div>
+        <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
         <div class="stat cyan"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats</div></div>
         <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
-        <div class="stat purple"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances restants</div></div>
-        <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
+        <div class="stat red"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades</div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Guàrdies</div>
       <div class="stats">
-        <div class="stat cyan"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP realitzades</div></div>
-        <div class="stat pink"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit realitzades</div></div>
         <div class="stat blue"><div class="value" id="stat-gnp-rest">0</div><div class="label">GNP restants</div></div>
+        <div class="stat cyan"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP realitzades</div></div>
         <div class="stat purple"><div class="value" id="stat-gnit-rest">0</div><div class="label">G. Nit restants</div></div>
+        <div class="stat pink"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit realitzades</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">Guàrdies de nit respecte al còmput anual (<span id="stat-gnit-pct">0</span>%)</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-gnit" style="width:0%;background:var(--pink)"></div></div>
       </div>
     </div>
     <div class="card">
@@ -496,6 +501,9 @@ function actualitzarVistaAnual(){
   document.getElementById("stat-treballades").textContent=r.treballades;
   document.getElementById("stat-restants").textContent=r.restants;
   document.getElementById("stat-acumulades").textContent=r.acumulades;
+  const acumUsades = r.acumUsades || 0;
+  const elAcumU = document.getElementById("stat-acum-usades");
+  if(elAcumU) elAcumU.textContent = acumUsades;
   document.getElementById("stat-percent").textContent=r.percent+"%";
   document.getElementById("progress-anual").style.width=Math.min(r.percent,100)+"%";
   document.getElementById("stat-vac-rest").textContent=r.vacRestants;
@@ -506,6 +514,11 @@ function actualitzarVistaAnual(){
   document.getElementById("stat-gnit-rest").textContent=r.gnitRestants;
   document.getElementById("stat-gnp-usades").textContent=r.gnpUsades;
   document.getElementById("stat-gnit-usades").textContent=r.gnitUsades;
+  const gnitPct = estat.horesAnuals > 0 ? Math.round((r.gnitUsades / estat.horesAnuals) * 1000) / 10 : 0;
+  const elPct = document.getElementById("stat-gnit-pct");
+  if(elPct) elPct.textContent = gnitPct;
+  const elBar = document.getElementById("progress-gnit");
+  if(elBar) elBar.style.width = Math.min(gnitPct, 100) + "%";
   document.getElementById("year-range").textContent=`Any de treball: 1 feb ${estat.anyInici} → 31 gen ${estat.anyInici+1}`;
   document.getElementById("resum-tipus").innerHTML=`Dies treballats: <strong>${r.diesTreball}</strong> · Judicis: <strong>${estat.judicis.length}</strong>`;
 }
