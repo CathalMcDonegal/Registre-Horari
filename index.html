@@ -180,7 +180,7 @@
         <div class="stat green"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades</div></div>
         <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
         <div class="stat cyan"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats</div></div>
-        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
+        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades (banc)</div></div>
         <div class="stat red"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades</div></div>
       </div>
     </div>
@@ -274,6 +274,9 @@
         <input type="number" id="cfg-gnp" min="0" step="0.5" value="0">
         <label>Hores Guàrdies de nit</label>
         <input type="number" id="cfg-gnit" min="0" step="0.5" value="0">
+        <label>Hores acumulades (banc inicial)</label>
+        <input type="number" id="cfg-acum" min="0" step="0.5" value="0">
+        <div class="hint">Les hores que facis de més en un torn s'hi sumen automàticament</div>
       </div>
       <button class="btn btn-primary" onclick="guardarConfig()">Desar configuració</button>
     </div>
@@ -430,7 +433,7 @@ const TIPUS_NOMS = {
 let estat = {
   titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal",
   anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68,
-  gnpTotals:0, gnitTotals:0,
+  gnpTotals:0, gnitTotals:0, acumTotals:0,
   torns: JSON.parse(JSON.stringify(TORN_DEFAULT)),
   festius: {...FESTIUS_DEFAULT}, registres:{}, judicis:[]
 };
@@ -446,6 +449,7 @@ function carregar() {
       if (!estat.torns?.length) estat.torns = JSON.parse(JSON.stringify(TORN_DEFAULT));
       if (!estat.festius) estat.festius = {...FESTIUS_DEFAULT};
       if (!estat.judicis) estat.judicis = [];
+      if (estat.acumTotals === undefined) estat.acumTotals = 0;
     } catch(e){}
   }
   const ara = new Date();
@@ -490,7 +494,7 @@ function calcularResum(){
   }
   return {
     treballades:+treballades.toFixed(2), restants:+(estat.horesAnuals-treballades).toFixed(2),
-    acumulades:+acumulades.toFixed(2), percent:estat.horesAnuals>0?Math.round(treballades/estat.horesAnuals*100):0,
+    acumulades:+((estat.acumTotals||0)+acumulades).toFixed(2), acumExtra:+acumulades.toFixed(2), percent:estat.horesAnuals>0?Math.round(treballades/estat.horesAnuals*100):0,
     vacUsades:+vacUsades.toFixed(2), vacRestants:+(estat.vacancesTotals-vacUsades).toFixed(2),
     persUsades:+persUsades.toFixed(2), persRestants:+(estat.assumptesTotals-persUsades).toFixed(2),
     gnpUsades:+gnpUsades.toFixed(2), gnpRestants:+(estat.gnpTotals-gnpUsades).toFixed(2),
@@ -832,6 +836,7 @@ function carregarConfigUI(){
   document.getElementById("cfg-assumptes").value=estat.assumptesTotals;
   document.getElementById("cfg-gnp").value=estat.gnpTotals;
   document.getElementById("cfg-gnit").value=estat.gnitTotals;
+  document.getElementById("cfg-acum").value=estat.acumTotals||0;
   renderCfgTorns();
 }
 function guardarConfig(){
@@ -844,6 +849,7 @@ function guardarConfig(){
   estat.assumptesTotals=parseFloat(document.getElementById("cfg-assumptes").value)||68;
   estat.gnpTotals=parseFloat(document.getElementById("cfg-gnp").value)||0;
   estat.gnitTotals=parseFloat(document.getElementById("cfg-gnit").value)||0;
+  estat.acumTotals=parseFloat(document.getElementById("cfg-acum").value)||0;
   desar(); actualitzarTitol(); omplirSelectsTorns(); actualitzarVistaAnual();
   alert("Configuració desada.");
 }
