@@ -11,19 +11,12 @@
   <link rel="manifest" href="manifest.json">
   <title>Registre Horari</title>
   <style>
-    :root, [data-theme="dia"] {
-      --bg: #ffffff; --bg2: #ffffff; --bg3: #f0f0f0; --card: #ffffff;
-      --text: #000000; --text2: #333333; --accent: #0055cc; --accent2: #0066ee;
-      --green: #007700; --red: #cc0000; --orange: #cc6600; --purple: #6600aa;
-      --cyan: #006688; --pink: #aa0066; --border: #cccccc; --radius: 12px;
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --weekend-bg: #f7f7f7; --festiu-bg: #fff8e6; --festiu-border: #e69500;
-    }
-    [data-theme="nit"] {
+    :root {
       --bg: #f1f5f9; --bg2: #ffffff; --bg3: #e2e8f0; --card: #ffffff;
       --text: #0f172a; --text2: #64748b; --accent: #2563eb; --accent2: #3b82f6;
       --green: #16a34a; --red: #dc2626; --orange: #ea580c; --purple: #7c3aed;
-      --cyan: #0891b2; --pink: #db2777; --border: #cbd5e1;
+      --cyan: #0891b2; --pink: #db2777; --border: #cbd5e1; --radius: 12px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
       --weekend-bg: #f8fafc; --festiu-bg: #fff7ed; --festiu-border: #fb923c;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -123,20 +116,25 @@
     .cal-day.has-reg { border: 2px solid var(--accent); background: #eff6ff; font-weight: 700; }
     .day-item.has-reg { border-width: 2px; }
 
-    .cal-day.t-mati, .day-item.t-mati { background: #dbeafe !important; border-color: #2563eb !important; }
-    .cal-day.t-tarda, .day-item.t-tarda { background: #fef9c3 !important; border-color: #ca8a04 !important; }
-    .cal-day.t-nit, .day-item.t-nit { background: #e0e7ff !important; border-color: #4f46e5 !important; }
-    .cal-day.t-cs_dia, .day-item.t-cs_dia { background: #ffedd5 !important; border-color: #ea580c !important; }
-    .cal-day.t-cs_nit, .day-item.t-cs_nit { background: #fce7f3 !important; border-color: #db2777 !important; }
-    .cal-day.t-fd, .day-item.t-fd { background: #fef3c7 !important; border-color: #d97706 !important; }
-    .cal-day.t-fn, .day-item.t-fn { background: #fce7f3 !important; border-color: #9d174d !important; }
-    .cal-day.t-vacances, .day-item.t-vacances { background: #dcfce7 !important; border-color: #16a34a !important; }
-    .cal-day.t-assumptes, .day-item.t-assumptes { background: #ecfdf5 !important; border-color: #059669 !important; }
-    .cal-day.t-baixa, .day-item.t-baixa { background: #fee2e2 !important; border-color: #dc2626 !important; }
-    .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #cffafe !important; border-color: #0891b2 !important; }
-    .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #ede9fe !important; border-color: #7c3aed !important; }
-    .cal-day.t-altres, .day-item.t-altres { background: #f1f5f9 !important; border-color: #64748b !important; }
-    .cal-day.t-judici, .day-item.t-judici { background: #fef3c7 !important; border-color: #b45309 !important; }
+    /* Groc = matí / dia */
+    .cal-day.t-mati, .day-item.t-mati { background: #fef08a !important; border-color: #ca8a04 !important; }
+    .cal-day.t-cs_dia, .day-item.t-cs_dia { background: #fde047 !important; border-color: #a16207 !important; }
+    .cal-day.t-fd, .day-item.t-fd { background: #facc15 !important; border-color: #854d0e !important; }
+    /* Taronja = tarda */
+    .cal-day.t-tarda, .day-item.t-tarda { background: #fdba74 !important; border-color: #ea580c !important; }
+    /* Blau = nits */
+    .cal-day.t-nit, .day-item.t-nit { background: #93c5fd !important; border-color: #2563eb !important; }
+    .cal-day.t-cs_nit, .day-item.t-cs_nit { background: #60a5fa !important; border-color: #1d4ed8 !important; }
+    .cal-day.t-fn, .day-item.t-fn { background: #3b82f6 !important; border-color: #1e3a8a !important; color: #fff !important; }
+    .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #bfdbfe !important; border-color: #3b82f6 !important; }
+    /* Verds = vacances, AP, festa-related, acumulades */
+    .cal-day.t-vacances, .day-item.t-vacances { background: #86efac !important; border-color: #16a34a !important; }
+    .cal-day.t-assumptes, .day-item.t-assumptes { background: #bbf7d0 !important; border-color: #22c55e !important; }
+    .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #4ade80 !important; border-color: #15803d !important; }
+    .cal-day.t-altres, .day-item.t-altres { background: #dcfce7 !important; border-color: #166534 !important; }
+    /* Vermell = baixa */
+    .cal-day.t-baixa, .day-item.t-baixa { background: #fca5a5 !important; border-color: #dc2626 !important; }
+    .cal-day.t-judici, .day-item.t-judici { background: #e9d5ff !important; border-color: #7c3aed !important; }
 
     .cal-day.selected { background: #dbeafe; border-color: var(--accent); }
     .cal-day .dot { position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
@@ -172,8 +170,8 @@
     <div class="card">
       <div class="card-title">Còmput anual d'hores</div>
       <div class="stats">
-        <div class="stat blue"><div class="value" id="stat-treballades">0</div><div class="label">Hores treballades</div></div>
-        <div class="stat green"><div class="value" id="stat-restants">1580</div><div class="label">Hores restants</div></div>
+        <div class="stat green"><div class="value" id="stat-restants">1580</div><div class="label">Còmput restant (1580)</div></div>
+        <div class="stat blue"><div class="value" id="stat-treballades">0</div><div class="label">Hores planificades</div></div>
       </div>
       <div style="margin-top:10px">
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">Progrés del còmput anual</div>
@@ -237,6 +235,7 @@
     </div>
     <div class="toolbar">
       <button class="btn btn-sm btn-secondary" id="btn-multi-m" onclick="toggleMulti()">Selecció massiva: OFF</button>
+      <button class="btn btn-sm btn-secondary" id="btn-mes-sencer" style="display:none" onclick="seleccionarMesSencer()">Mes sencer</button>
       <button class="btn btn-sm btn-primary" id="btn-aplicar-m" style="display:none" onclick="aplicarMassiu()">Aplicar a seleccionats</button>
     </div>
     <div class="legend-row">
@@ -257,11 +256,6 @@
   <div id="view-config" class="view">
     <div class="card">
       <div class="card-title">Configuració</div>
-      <div class="config-group">
-        <h3>Aparença</h3>
-        <button type="button" class="btn btn-sm btn-secondary" id="btn-tema" onclick="canviarTema()" style="margin-bottom:6px;width:auto;padding:8px 14px">Mode nit</button>
-        <div class="hint">Mode dia: blanc amb text negre · Mode nit: tons suaus</div>
-      </div>
       <div class="config-group">
         <h3>Títol de l'app</h3>
         <label>Títol principal</label>
@@ -443,7 +437,7 @@ const TIPUS_NOMS = {
 };
 
 let estat = {
-  titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal", tema:"dia",
+  titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal",
   anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68,
   gnpTotals:0, gnitTotals:0, acumTotals:0,
   torns: JSON.parse(JSON.stringify(TORN_DEFAULT)),
@@ -467,26 +461,13 @@ function carregar() {
   const ara = new Date();
   if (ara.getMonth()===0){ anyActualVista=ara.getFullYear()-1; mesActual=0; }
   else { anyActualVista=ara.getFullYear(); mesActual=ara.getMonth(); }
-  actualitzarTitol(); aplicarTema(); omplirSelectsTorns();
+  actualitzarTitol(); omplirSelectsTorns();
 }
 function desar(){ localStorage.setItem("registreHorariMossos", JSON.stringify(estat)); }
 function actualitzarTitol(){
   document.getElementById("app-titol").textContent = estat.titol||"Registre Horari";
   document.getElementById("app-subtitol").textContent = estat.subtitol||"";
   document.title = estat.titol||"Registre Horari";
-}
-function aplicarTema(){
-  const tema = estat.tema || "dia";
-  document.documentElement.setAttribute("data-theme", tema);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.setAttribute("content", tema==="nit" ? "#f1f5f9" : "#ffffff");
-  const btn = document.getElementById("btn-tema");
-  if(btn) btn.textContent = tema==="nit" ? "Mode dia" : "Mode nit";
-}
-function canviarTema(){
-  estat.tema = (estat.tema==="nit") ? "dia" : "nit";
-  desar();
-  aplicarTema();
 }
 function formatData(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function esFestiu(c){ return !!estat.festius[c]; }
@@ -506,20 +487,33 @@ function omplirSelectsTorns(){
 }
 
 function calcularResum(){
-  let treballades=0,acumulades=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,diesTreball=0;
+  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,diesTreball=0;
+  // planificades = el que resta del còmput 1580: torns de treball + assumptes personals
+  // vacances NO resten del 1580; acumulades NO resten del 1580
+  // Matí: suma 0.5h a acumulades a més de les hores del torn al còmput
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
       const torn=getTorn(r.torn); const hp=torn?torn.hores:0; const hr=parseFloat(r.hores)||0;
-      treballades+=hr; diesTreball++; if(hr>hp) acumulades+=(hr-hp);
-    } else if(r.tipus==="vacances") vacUsades+=parseFloat(r.horesConcepte)||0;
-    else if(r.tipus==="assumptes") persUsades+=parseFloat(r.horesConcepte)||0;
-    else if(r.tipus==="guardia_np") gnpUsades+=parseFloat(r.horesConcepte)||0;
+      planificades+=hr; diesTreball++;
+      if(hr>hp) acumuladesExtra+=(hr-hp);
+      // Matí: +30 min a acumulades sempre que es planifiqui
+      if(torn && (torn.id==="mati" || (torn.nom||"").toLowerCase().includes("matí") || (torn.nom||"").toLowerCase().includes("mati"))){
+        acumuladesExtra+=0.5;
+      }
+    } else if(r.tipus==="vacances"){
+      vacUsades+=parseFloat(r.horesConcepte)||0;
+      // no suma a planificades
+    } else if(r.tipus==="assumptes"){
+      const h=parseFloat(r.horesConcepte)||0;
+      persUsades+=h;
+      planificades+=h; // sí resten del còmput general
+    } else if(r.tipus==="guardia_np") gnpUsades+=parseFloat(r.horesConcepte)||0;
     else if(r.tipus==="guardia_nit") gnitUsades+=parseFloat(r.horesConcepte)||0;
   }
   return {
-    treballades:+treballades.toFixed(2), restants:+(estat.horesAnuals-treballades).toFixed(2),
-    acumulades:+((estat.acumTotals||0)+acumulades).toFixed(2), acumExtra:+acumulades.toFixed(2), percent:estat.horesAnuals>0?Math.round(treballades/estat.horesAnuals*100):0,
+    treballades:+planificades.toFixed(2), restants:+(estat.horesAnuals-planificades).toFixed(2),
+    acumulades:+((estat.acumTotals||0)+acumuladesExtra).toFixed(2), acumExtra:+acumuladesExtra.toFixed(2), percent:estat.horesAnuals>0?Math.round(planificades/estat.horesAnuals*100):0,
     vacUsades:+vacUsades.toFixed(2), vacRestants:+(estat.vacancesTotals-vacUsades).toFixed(2),
     persUsades:+persUsades.toFixed(2), persRestants:+(estat.assumptesTotals-persUsades).toFixed(2),
     gnpUsades:+gnpUsades.toFixed(2), gnpRestants:+(estat.gnpTotals-gnpUsades).toFixed(2),
@@ -561,7 +555,7 @@ function renderCalendariAnual(){
   mesosOrdre.forEach(({mes,any})=>{
     const primer=new Date(any,mes,1), ultim=new Date(any,mes+1,0);
     let startDow=(primer.getDay()+6)%7;
-    html+=`<div class="cal-month"><h3>${MESOS[mes]} ${any}</h3><div class="cal-grid">`;
+    html+=`<div class="cal-month"><h3 style="cursor:pointer" onclick="seleccionarMesCal(${mes},${any})" title="Seleccionar mes sencer">${MESOS[mes]} ${any}</h3><div class="cal-grid">`;
     DIES_SET.forEach(d=>html+=`<div class="dow">${d}</div>`);
     for(let e=0;e<startDow;e++) html+=`<div class="cal-day empty"></div>`;
     for(let dia=1;dia<=ultim.getDate();dia++){
@@ -657,8 +651,38 @@ function toggleMulti(){
   document.getElementById("btn-multi-m").textContent="Selecció massiva: "+(multiMode?"ON":"OFF");
   document.getElementById("btn-aplicar").style.display=multiMode?"inline-block":"none";
   document.getElementById("btn-aplicar-m").style.display=multiMode?"inline-block":"none";
+  const bm=document.getElementById("btn-mes-sencer");
+  if(bm) bm.style.display=multiMode?"inline-block":"none";
   if(document.getElementById("view-calendari").classList.contains("active")) renderCalendariAnual();
   if(document.getElementById("view-mensual").classList.contains("active")) renderMes();
+}
+function seleccionarMesCal(mes,any){
+  if(!multiMode){ alert("Activa primer la selecció massiva"); return; }
+  const ultim=new Date(any,mes+1,0);
+  let tots=true;
+  for(let dia=1;dia<=ultim.getDate();dia++){
+    if(!seleccionats.has(formatData(new Date(any,mes,dia)))){ tots=false; break; }
+  }
+  for(let dia=1;dia<=ultim.getDate();dia++){
+    const clau=formatData(new Date(any,mes,dia));
+    if(tots) seleccionats.delete(clau); else seleccionats.add(clau);
+  }
+  renderCalendariAnual();
+}
+function seleccionarMesSencer(){
+  if(!multiMode) return;
+  const ultim=new Date(anyActualVista,mesActual+1,0);
+  let totsSeleccionats=true;
+  for(let dia=1;dia<=ultim.getDate();dia++){
+    const clau=formatData(new Date(anyActualVista,mesActual,dia));
+    if(!seleccionats.has(clau)){ totsSeleccionats=false; break; }
+  }
+  for(let dia=1;dia<=ultim.getDate();dia++){
+    const clau=formatData(new Date(anyActualVista,mesActual,dia));
+    if(totsSeleccionats) seleccionats.delete(clau);
+    else seleccionats.add(clau);
+  }
+  renderMes();
 }
 
 function clickDiaCal(clau){
@@ -898,7 +922,7 @@ function mostrarVista(nom){
   if(nom==="mensual") renderMes();
   if(nom==="calendari") renderCalendariAnual();
   if(nom==="judicis") renderJudicis();
-  if(nom==="config"){ carregarConfigUI(); aplicarTema(); }
+  if(nom==="config") carregarConfigUI();
 }
 carregar(); actualitzarVistaAnual(); renderMes();
 </script>
