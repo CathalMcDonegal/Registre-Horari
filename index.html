@@ -11,13 +11,20 @@
   <link rel="manifest" href="manifest.json">
   <title>Registre Horari</title>
   <style>
-    :root {
+    :root, [data-theme="dia"] {
       --bg: #f1f5f9; --bg2: #ffffff; --bg3: #e2e8f0; --card: #ffffff;
       --text: #0f172a; --text2: #64748b; --accent: #2563eb; --accent2: #3b82f6;
       --green: #16a34a; --red: #dc2626; --orange: #ea580c; --purple: #7c3aed;
       --cyan: #0891b2; --pink: #db2777; --border: #cbd5e1; --radius: 12px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --weekend-bg: #f8fafc; --festiu-bg: #fff7ed; --festiu-border: #fb923c;
+    }
+    [data-theme="nit"] {
+      --bg: #0f172a; --bg2: #1e293b; --bg3: #334155; --card: #1e293b;
+      --text: #f1f5f9; --text2: #94a3b8; --accent: #3b82f6; --accent2: #60a5fa;
+      --green: #22c55e; --red: #ef4444; --orange: #f59e0b; --purple: #a855f7;
+      --cyan: #06b6d4; --pink: #ec4899; --border: #334155;
+      --weekend-bg: #1e293b; --festiu-bg: #422006; --festiu-border: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -251,6 +258,11 @@
     <div class="card">
       <div class="card-title">Configuració</div>
       <div class="config-group">
+        <h3>Aparença</h3>
+        <button type="button" class="btn btn-secondary" id="btn-tema" onclick="canviarTema()" style="margin-bottom:8px">Mode nit</button>
+        <div class="hint">Canvia entre mode dia (clar) i mode nit (fosc)</div>
+      </div>
+      <div class="config-group">
         <h3>Títol de l'app</h3>
         <label>Títol principal</label>
         <input type="text" id="cfg-titol" value="Registre Horari">
@@ -431,7 +443,7 @@ const TIPUS_NOMS = {
 };
 
 let estat = {
-  titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal",
+  titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal", tema:"dia",
   anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68,
   gnpTotals:0, gnitTotals:0, acumTotals:0,
   torns: JSON.parse(JSON.stringify(TORN_DEFAULT)),
@@ -455,13 +467,26 @@ function carregar() {
   const ara = new Date();
   if (ara.getMonth()===0){ anyActualVista=ara.getFullYear()-1; mesActual=0; }
   else { anyActualVista=ara.getFullYear(); mesActual=ara.getMonth(); }
-  actualitzarTitol(); omplirSelectsTorns();
+  actualitzarTitol(); aplicarTema(); omplirSelectsTorns();
 }
 function desar(){ localStorage.setItem("registreHorariMossos", JSON.stringify(estat)); }
 function actualitzarTitol(){
   document.getElementById("app-titol").textContent = estat.titol||"Registre Horari";
   document.getElementById("app-subtitol").textContent = estat.subtitol||"";
   document.title = estat.titol||"Registre Horari";
+}
+function aplicarTema(){
+  const tema = estat.tema || "dia";
+  document.documentElement.setAttribute("data-theme", tema);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute("content", tema==="nit" ? "#0f172a" : "#f1f5f9");
+  const btn = document.getElementById("btn-tema");
+  if(btn) btn.textContent = tema==="nit" ? "Mode dia" : "Mode nit";
+}
+function canviarTema(){
+  estat.tema = (estat.tema==="nit") ? "dia" : "nit";
+  desar();
+  aplicarTema();
 }
 function formatData(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function esFestiu(c){ return !!estat.festius[c]; }
@@ -873,7 +898,7 @@ function mostrarVista(nom){
   if(nom==="mensual") renderMes();
   if(nom==="calendari") renderCalendariAnual();
   if(nom==="judicis") renderJudicis();
-  if(nom==="config") carregarConfigUI();
+  if(nom==="config"){ carregarConfigUI(); aplicarTema(); }
 }
 carregar(); actualitzarVistaAnual(); renderMes();
 </script>
