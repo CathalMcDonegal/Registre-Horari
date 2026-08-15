@@ -107,13 +107,14 @@
     .cal-month h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--accent); font-weight: 700; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
     .cal-grid .dow { font-size: 0.65rem; color: var(--text2); font-weight: 700; padding: 4px 0; }
-    .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
       font-size: 0.78rem; border-radius: 6px; background: var(--bg2); cursor: pointer;
-      position: relative; font-weight: 500; border: 1px solid transparent; }
+      position: relative; font-weight: 500; border: 1px solid transparent; padding-bottom: 2px; }
     .cal-day.empty { background: transparent; border: none; cursor: default; }
     .cal-day.weekend { background: var(--weekend-bg); color: var(--text2); }
     .cal-day.festiu { background: var(--festiu-bg); color: var(--orange); font-weight: 700; border-color: #fed7aa; }
-    .cal-day.has-reg { border-color: var(--accent); }
+    .cal-day.has-reg { border: 2px solid var(--accent); background: #eff6ff; font-weight: 700; }
+    .day-item.has-reg { border: 2px solid var(--accent); box-shadow: 0 0 0 1px var(--accent); }
     .cal-day.selected { background: #dbeafe; border-color: var(--accent); }
     .cal-day .dot { position: absolute; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--green); }
     .legend-row { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.7rem; margin: 8px 0 12px; color: var(--text2); }
@@ -150,7 +151,6 @@
       <div class="stats">
         <div class="stat blue"><div class="value" id="stat-treballades">0</div><div class="label">Hores treballades</div></div>
         <div class="stat green"><div class="value" id="stat-restants">1580</div><div class="label">Hores restants</div></div>
-        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
         <div class="stat purple"><div class="value" id="stat-percent">0%</div><div class="label">Completat</div></div>
       </div>
       <div class="progress-bar"><div class="progress-fill" id="progress-anual" style="width:0%"></div></div>
@@ -162,6 +162,7 @@
         <div class="stat cyan"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes rest.</div></div>
         <div class="stat red"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances usades</div></div>
         <div class="stat purple"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes usats</div></div>
+        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
       </div>
     </div>
     <div class="card">
@@ -272,7 +273,7 @@
         <button class="modal-close" onclick="tancarModal()">×</button>
       </div>
       <label>Tipus de dia</label>
-      <select id="edit-tipus" onchange="canviarTipus()">
+      <select id="edit-tipus">
         <option value="">— Sense registrar —</option>
         <option value="treball">Treball</option>
         <option value="vacances">Vacances</option>
@@ -510,7 +511,16 @@ function renderCalendariAnual(){
       if(esFestiu(clau)) cls+=" festiu";
       if(estat.registres[clau]?.tipus) cls+=" has-reg";
       if(seleccionats.has(clau)) cls+=" selected";
-      html+=`<div class="${cls}" onclick="clickDiaCal('${clau}')">${dia}${estat.registres[clau]?.tipus?'<span class="dot"></span>':''}</div>`;
+      let ab="";
+      const rg=estat.registres[clau];
+      if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; }
+      else if(rg?.tipus==="vacances") ab="Vac";
+      else if(rg?.tipus==="assumptes") ab="AP";
+      else if(rg?.tipus==="baixa") ab="Bxa";
+      else if(rg?.tipus==="guardia_np") ab="GNP";
+      else if(rg?.tipus==="guardia_nit") ab="GN";
+      else if(rg?.tipus==="altres") ab="Alt";
+      html+=`<div class="${cls}" onclick="clickDiaCal('${clau}')"><span>${dia}</span>${ab?`<span style="position:absolute;bottom:1px;left:0;right:0;font-size:0.5rem;font-weight:700;line-height:1;color:var(--accent)">${ab}</span>`:""}</div>`;
     }
     html+=`</div></div>`;
   });
@@ -537,6 +547,7 @@ function renderMes(){
     if(esCapDeSetmana(d)) extraClass+=" weekend";
     if(esFestiu(clau)) extraClass+=" festiu";
     if(seleccionats.has(clau)) extraClass+=" selected";
+    if(reg?.tipus) extraClass+=" has-reg";
     const judicisDia=estat.judicis.filter(j=>j.data===clau);
     if(judicisDia.length) detail+=judicisDia.map(j=>`⚖️ ${j.hora||''} ${j.jutjat||''} ${j.sala||''}`).join(" · ");
     if(reg?.tipus){
@@ -634,16 +645,16 @@ function obrirDia(clau){
   document.getElementById("edit-sortida").value=reg.sortida||torn?.fi||"14:30";
   document.getElementById("edit-hores-concepte").value=reg.horesConcepte!=null?reg.horesConcepte:7.5;
   document.getElementById("edit-notes").value=reg.notes||"";
-  canviarTipus();
+  canviarTipus(false);
   document.getElementById("btn-esborrar").style.display=reg.tipus?"block":"none";
   document.getElementById("modal").classList.add("open");
 }
 function tancarModal(){ document.getElementById("modal").classList.remove("open"); diaEdicio=null; }
-function canviarTipus(){
+function canviarTipus(forceDefaults){
   const tipus=document.getElementById("edit-tipus").value;
   document.getElementById("bloc-treball").style.display=tipus==="treball"?"block":"none";
   document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","baixa","guardia_np","guardia_nit","altres"].includes(tipus)?"block":"none";
-  if(tipus==="treball"){
+  if(tipus==="treball" && forceDefaults){
     const torn=getTorn(document.getElementById("edit-torn").value);
     if(torn){ document.getElementById("edit-hores").value=torn.hores; document.getElementById("edit-entrada").value=torn.inici; document.getElementById("edit-sortida").value=torn.fi; }
   }
@@ -651,6 +662,9 @@ function canviarTipus(){
 document.getElementById("edit-torn").addEventListener("change",function(){
   const torn=getTorn(this.value);
   if(torn){ document.getElementById("edit-hores").value=torn.hores; document.getElementById("edit-entrada").value=torn.inici; document.getElementById("edit-sortida").value=torn.fi; }
+});
+document.getElementById("edit-tipus").addEventListener("change",function(){
+  canviarTipus(this.value==="treball");
 });
 function desarDia(){
   if(!diaEdicio) return;
