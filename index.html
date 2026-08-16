@@ -129,7 +129,7 @@
     .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #bfdbfe !important; border-color: #3b82f6 !important; }
     /* Verds = vacances, AP, festa-related, acumulades */
     .cal-day.t-vacances, .day-item.t-vacances { background: #86efac !important; border-color: #16a34a !important; }
-    .cal-day.t-festa, .day-item.t-festa { background: #34d399 !important; border-color: #047857 !important; }
+    .cal-day.t-festa, .day-item.t-festa { background: #86efac !important; border-color: #16a34a !important; }
     .cal-day.t-hores_acum, .day-item.t-hores_acum { background: #4ade80 !important; border-color: #15803d !important; }
     .cal-day.t-assumptes, .day-item.t-assumptes { background: #bbf7d0 !important; border-color: #22c55e !important; }
     .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #fde047 !important; border-color: #eab308 !important; }
@@ -425,7 +425,7 @@ const TORN_DEFAULT = [
   { id:"cs_nit", nom:"Cap de setmana Nit", abbr:"Nit 12h", hores:12, inici:"19:00", fi:"07:00", color:"#60a5fa", border:"#1d4ed8" },
   { id:"fd", nom:"Festiu Dia", abbr:"FD 12h", hores:12, inici:"07:00", fi:"19:00", color:"#fef08a", border:"#ca8a04" },
   { id:"fn", nom:"Festiu Nit", abbr:"FN 12h", hores:12, inici:"19:00", fi:"07:00", color:"#3b82f6", border:"#1e3a8a" },
-  { id:"festa", nom:"Festa", abbr:"Festa", hores:7.5, inici:"07:00", fi:"14:30", color:"#34d399", border:"#047857" }
+  { id:"festa", nom:"Festa", abbr:"Festa", hores:7.5, inici:"07:00", fi:"14:30", color:"#86efac", border:"#16a34a" }
 ];
 const TIPUS_COLORS = {
   vacances:{color:"#86efac",border:"#16a34a"},
@@ -497,7 +497,12 @@ function getTorn(id){ return estat.torns.find(t=>t.id===id)||estat.torns[0]; }
 
 function estilTorn(tornId){
   const t=getTorn(tornId);
-  if(!t||!t.color) return "";
+  if(!t) return "";
+  // Festa: mateix color que vacances
+  if(t.id==="festa" || (t.nom||"").toLowerCase()==="festa"){
+    return `background:#86efac !important;border-color:#16a34a !important`;
+  }
+  if(!t.color) return "";
   return `background:${t.color} !important;border-color:${t.border||t.color} !important`;
 }
 function estilTipus(tipus){
@@ -917,7 +922,7 @@ function eliminarFestiu(clau){
 function renderCfgTorns(){
   const cont=document.getElementById("cfg-torns");
   cont.innerHTML=estat.torns.map((t,i)=>`
-    <div style="border:2px solid ${t.border||'#cbd5e1'};background:${t.color||'#fff'};border-radius:8px;padding:10px;margin-bottom:8px">
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-weight:700;margin-bottom:6px">${t.abbr} · ${t.nom}</div>
       <div class="form-row">
         <div><label>Nom</label><input type="text" id="torn-nom-${i}" value="${t.nom}"></div>
@@ -929,13 +934,7 @@ function renderCfgTorns(){
       </div>
       <div class="form-row">
         <div><label>Fi (HH:MM)</label><input type="text" id="torn-fi-${i}" value="${t.fi}" placeholder="14:30"></div>
-        <div>
-          <label>Color</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="color" id="torn-color-${i}" value="${t.color||'#fef08a'}" style="width:48px;height:38px;padding:2px;border-radius:8px;border:1px solid var(--border);cursor:pointer">
-            <button class="btn btn-sm btn-danger" onclick="eliminarTorn(${i})">Eliminar</button>
-          </div>
-        </div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-sm btn-danger" onclick="eliminarTorn(${i})">Eliminar</button></div>
       </div>
     </div>`).join("");
 }
@@ -954,8 +953,6 @@ function desarTornsDesdeConfig(){
     t.hores=parseFloat(document.getElementById("torn-hores-"+i)?.value)||t.hores;
     t.inici=document.getElementById("torn-inici-"+i)?.value||t.inici;
     t.fi=document.getElementById("torn-fi-"+i)?.value||t.fi;
-    const col=document.getElementById("torn-color-"+i)?.value;
-    if(col){ t.color=col; t.border=col; }
   });
 }
 
