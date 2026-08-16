@@ -119,9 +119,9 @@
     /* Groc = matí / dia */
     .cal-day.t-mati, .day-item.t-mati { background: #fef08a !important; border-color: #ca8a04 !important; }
     .cal-day.t-cs_dia, .day-item.t-cs_dia { background: #fde047 !important; border-color: #a16207 !important; }
-    .cal-day.t-fd, .day-item.t-fd { background: #86efac !important; border-color: #16a34a !important; }
+    .cal-day.t-fd, .day-item.t-fd { background: #93c5fd !important; border-color: #2563eb !important; }
     /* Taronja = tarda */
-    .cal-day.t-tarda, .day-item.t-tarda { background: #fdba74 !important; border-color: #ea580c !important; }
+    .cal-day.t-tarda, .day-item.t-tarda { background: #fed7aa !important; border-color: #fb923c !important; }
     /* Blau = nits */
     .cal-day.t-nit, .day-item.t-nit { background: #93c5fd !important; border-color: #2563eb !important; }
     .cal-day.t-cs_nit, .day-item.t-cs_nit { background: #60a5fa !important; border-color: #1d4ed8 !important; }
@@ -129,9 +129,10 @@
     .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #bfdbfe !important; border-color: #3b82f6 !important; }
     /* Verds = vacances, AP, festa-related, acumulades */
     .cal-day.t-vacances, .day-item.t-vacances { background: #86efac !important; border-color: #16a34a !important; }
+    .cal-day.t-festa, .day-item.t-festa { background: #6ee7b7 !important; border-color: #059669 !important; }
     .cal-day.t-hores_acum, .day-item.t-hores_acum { background: #4ade80 !important; border-color: #15803d !important; }
     .cal-day.t-assumptes, .day-item.t-assumptes { background: #bbf7d0 !important; border-color: #22c55e !important; }
-    .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #4ade80 !important; border-color: #15803d !important; }
+    .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #fef08a !important; border-color: #ca8a04 !important; }
     .cal-day.t-altres, .day-item.t-altres { background: #dcfce7 !important; border-color: #166534 !important; }
     /* Vermell = baixa */
     .cal-day.t-baixa, .day-item.t-baixa { background: #fca5a5 !important; border-color: #dc2626 !important; }
@@ -148,6 +149,8 @@
     .toolbar .btn-sm { margin: 0; }
     .judicis-list { display: flex; flex-direction: column; gap: 8px; }
     .judici-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; }
+    .judici-item.cobrat { background: #dcfce7; border-color: #86efac; }
+    .judici-item.no-cobrat { background: #fee2e2; border-color: #fca5a5; }
     .judici-item .j-title { font-weight: 700; font-size: 0.95rem; }
     .judici-item .j-detail { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
     .judici-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
@@ -352,7 +355,7 @@
       <label>Procediment</label><input type="text" id="j-procediment" placeholder="Núm. procediment">
       <label>Agents citats</label><input type="text" id="j-agents" placeholder="Noms o TIP">
       <div class="check-row"><input type="checkbox" id="j-celebrat"> <label for="j-celebrat" style="margin:0">S'ha celebrat</label></div>
-      <div class="check-row"><input type="checkbox" id="j-cobrament"> <label for="j-cobrament" style="margin:0">És de cobrament</label></div>
+      <div class="check-row"><input type="checkbox" id="j-cobrament"> <label for="j-cobrament" style="margin:0">✓ Cobrat</label></div>
       <div class="check-row"><input type="checkbox" id="j-canvi"> <label for="j-canvi" style="margin:0">Cal canviar el torn</label></div>
       <button class="btn btn-primary" onclick="desarJudici()">Desar judici</button>
       <button class="btn btn-danger" onclick="esborrarJudici()" id="btn-esborrar-judici" style="display:none">Esborrar</button>
@@ -421,7 +424,8 @@ const TORN_DEFAULT = [
   { id:"cs_dia", nom:"Cap de setmana Dia", abbr:"Dia 12h", hores:12, inici:"07:00", fi:"19:00" },
   { id:"cs_nit", nom:"Cap de setmana Nit", abbr:"Nit 12h", hores:12, inici:"19:00", fi:"07:00" },
   { id:"fd", nom:"Festiu Dia", abbr:"FD 12h", hores:12, inici:"07:00", fi:"19:00" },
-  { id:"fn", nom:"Festiu Nit", abbr:"FN 12h", hores:12, inici:"19:00", fi:"07:00" }
+  { id:"fn", nom:"Festiu Nit", abbr:"FN 12h", hores:12, inici:"19:00", fi:"07:00" },
+  { id:"festa", nom:"Festa", abbr:"Festa", hores:7.5, inici:"07:00", fi:"14:30" }
 ];
 const FESTIUS_DEFAULT = {
   "2026-01-01":"Cap d'Any (E)","2026-01-06":"Reis (E)","2026-04-03":"Divendres Sant (E)",
@@ -497,15 +501,22 @@ function calcularResum(){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
       const torn=getTorn(r.torn); const hp=torn?torn.hores:0; const hr=parseFloat(r.hores)||0;
-      planificades+=hr; diesTreball++;
-      if(hr>hp) acumuladesExtra+=(hr-hp);
-      // Matí: +30 min a acumulades
-      if(torn && (torn.id==="mati" || (torn.nom||"").toLowerCase().includes("matí") || (torn.nom||"").toLowerCase().includes("mati"))){
-        acumuladesExtra+=0.5;
-      }
-      // Nits (nit, cs_nit, fn): també descompten del còmput d'hores nocturnes
-      if(torn && (torn.id==="nit" || torn.id==="cs_nit" || torn.id==="fn" || (torn.nom||"").toLowerCase().includes("nit"))){
-        gnitUsades+=hr;
+      const nom=(torn?.nom||"").toLowerCase();
+      const id=torn?.id||"";
+      const esFesta = id==="festa" || nom.includes("festa") && !nom.includes("festiu");
+      // Torn festa 7.5h: SUMA al còmput (no resta)
+      if(esFesta){
+        planificades-=hr; // sumar al restant = restar de planificades
+        diesTreball++;
+      } else {
+        planificades+=hr; diesTreball++;
+        if(hr>hp) acumuladesExtra+=(hr-hp);
+        if(id==="mati" || nom.includes("matí") || nom.includes("mati")){
+          acumuladesExtra+=0.5;
+        }
+        if(id==="nit" || id==="cs_nit" || id==="fn" || nom.includes("nit")){
+          gnitUsades+=hr;
+        }
       }
     } else if(r.tipus==="vacances"){
       vacUsades+=parseFloat(r.horesConcepte)||0;
@@ -513,9 +524,12 @@ function calcularResum(){
       const h=parseFloat(r.horesConcepte)||0;
       persUsades+=h;
       planificades+=h;
+    } else if(r.tipus==="baixa"){
+      // Baixa resta del còmput general com un dia treballat
+      const h=parseFloat(r.horesConcepte)||0;
+      planificades+=h;
     } else if(r.tipus==="guardia_np") gnpUsades+=parseFloat(r.horesConcepte)||0;
     else if(r.tipus==="hores_acum"){
-      // resta del banc d'acumulades, no del 1580
       acumUsades+=parseFloat(r.horesConcepte)||7.5;
     }
   }
@@ -551,7 +565,19 @@ function actualitzarVistaAnual(){
   const elBar = document.getElementById("progress-gnit");
   if(elBar) elBar.style.width = Math.min(gnitPct, 100) + "%";
   document.getElementById("year-range").textContent=`Any de treball: 1 feb ${estat.anyInici} → 31 gen ${estat.anyInici+1}`;
-  document.getElementById("resum-tipus").innerHTML=`Dies treballats: <strong>${r.diesTreball}</strong> · Judicis: <strong>${estat.judicis.length}</strong>`;
+  const pendents=estat.judicis.filter(j=>!j.celebrat).sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+  let judHtml='<div style="font-weight:700;margin-bottom:8px;color:var(--text)">Resum Judicis</div>';
+  if(!pendents.length) judHtml+='<div style="color:var(--text2)">Cap judici pendent de celebrar</div>';
+  else {
+    judHtml+=pendents.map(j=>{
+      const idx=estat.judicis.indexOf(j);
+      const dataFmt=(j.data||"").slice(8,10)+"/"+(j.data||"").slice(5,7)+"/"+(j.data||"").slice(2,4);
+      return `<div onclick="mostrarVista('judicis');setTimeout(()=>obrirJudici(${idx}),100)" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;color:var(--accent);font-size:0.88rem">
+        ${dataFmt} ${j.hora||""}h · ${j.sala||""}${j.sala&&j.jutjat?", ":""}${j.jutjat||""}${j.procediment?" · "+j.procediment:""}
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("resum-tipus").innerHTML=judHtml;
 }
 
 function renderCalendariAnual(){
@@ -580,7 +606,7 @@ function renderCalendariAnual(){
       if(hasJud) cls+=" has-reg t-judici";
       if(seleccionats.has(clau)) cls+=" selected";
       let ab="";
-      if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; if(tn) cls+=" t-"+tn.id; }
+      if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; if(tn){ cls+=" t-"+tn.id; if(tn.id==="festa") cls+=" t-festa"; } }
       else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","baixa":"Bxa","guardia_np":"GNP","hores_acum":"HA","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
       if(hasJud && !ab) ab="J";
       else if(hasJud && ab) ab=ab+"/J";
@@ -613,7 +639,7 @@ function renderMes(){
     if(seleccionats.has(clau)) extraClass+=" selected";
     if(reg?.tipus){
       extraClass+=" has-reg";
-      if(reg.tipus==="treball"){ const tn=getTorn(reg.torn); if(tn) extraClass+=" t-"+tn.id; }
+      if(reg.tipus==="treball"){ const tn=getTorn(reg.torn); if(tn){ extraClass+=" t-"+tn.id; if(tn.id==="festa") extraClass+=" t-festa"; } }
       else extraClass+=" t-"+reg.tipus;
     }
     const hasJudM=estat.judicis.some(j=>j.data===clau);
@@ -798,12 +824,12 @@ function renderJudicis(){
   const ordenats=[...estat.judicis].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
   cont.innerHTML=ordenats.map(j=>{
     const idx=estat.judicis.indexOf(j);
-    return `<div class="judici-item" onclick="obrirJudici(${idx})">
+    return `<div class="judici-item ${j.cobrament?'cobrat':'no-cobrat'}" onclick="obrirJudici(${idx})">
       <div class="j-title">${j.data} · ${j.hora||""} · ${j.jutjat||""}</div>
       <div class="j-detail">${j.sala||""} · ${j.procediment||""} · Agents: ${j.agents||"—"}</div>
       <div class="judici-tags">
         ${j.celebrat?'<span class="tag tag-ok">Celebrat</span>':'<span class="tag tag-no">Pendent</span>'}
-        ${j.cobrament?'<span class="tag tag-pay">Cobrament</span>':''}
+        ${j.cobrament?'<span class="tag tag-ok">✓ Cobrat</span>':'<span class="tag tag-no">No cobrat</span>'}
         ${j.canviTorn?'<span class="tag tag-shift">Canvi torn</span>':''}
       </div>
     </div>`;
