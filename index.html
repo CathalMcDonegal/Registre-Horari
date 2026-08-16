@@ -164,14 +164,9 @@
 </head>
 <body>
   <div class="header">
-    <div style="flex:1;min-width:0">
+    <div>
       <h1 id="app-titol">Registre Horari</h1>
       <div class="subtitle" id="app-subtitol">Mossos d'Esquadra · Personal</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <button type="button" id="btn-any-prev" onclick="canviarAny(-1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;color:var(--text)">‹</button>
-      <select id="sel-any" onchange="seleccionarAny(this.value)" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-weight:700;font-size:0.9rem;color:var(--text);max-width:90px"></select>
-      <button type="button" id="btn-any-next" onclick="canviarAny(1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;color:var(--text)">›</button>
     </div>
   </div>
 
@@ -200,12 +195,6 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Hores extres</div>
-      <div class="stats">
-        <div class="stat pink" style="cursor:pointer" onclick="mostrarDiesTipus('hores_extres')"><div class="value" id="stat-extres">0</div><div class="label">Hores extres realitzades ▸</div></div>
-      </div>
-    </div>
-    <div class="card">
       <div class="card-title">Guàrdies</div>
       <div class="stats">
         <div class="stat blue"><div class="value" id="stat-gnp-rest">0</div><div class="label">GNP restants</div></div>
@@ -216,6 +205,12 @@
       <div style="margin-top:10px">
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">Guàrdies de nit respecte al còmput anual (<span id="stat-gnit-pct">0</span>%)</div>
         <div class="progress-bar"><div class="progress-fill" id="progress-gnit" style="width:0%;background:var(--pink)"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hores extres</div>
+      <div class="stats">
+        <div class="stat pink" style="cursor:pointer" onclick="mostrarDiesTipus('hores_extres')"><div class="value" id="stat-extres">0</div><div class="label">Hores extres realitzades ▸</div></div>
       </div>
     </div>
     <div class="card">
@@ -281,7 +276,14 @@
       </div>
       <div class="config-group">
         <h3>Any de treball</h3>
-        <label>Any d'inici (1 de febrer)</label>
+        <label>Any actiu (1 de febrer → 31 de gener)</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <button type="button" onclick="canviarAny(-1)" class="btn btn-sm btn-secondary" style="width:40px;margin:0">‹</button>
+          <select id="sel-any" onchange="seleccionarAny(this.value)" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-weight:700;font-size:1rem;color:var(--text)"></select>
+          <button type="button" onclick="canviarAny(1)" class="btn btn-sm btn-secondary" style="width:40px;margin:0">›</button>
+        </div>
+        <div class="hint">Canvia d'any per consultar l'històric. Les dades de cada any es conserven.</div>
+        <label>Any d'inici (valor numèric)</label>
         <input type="number" id="cfg-any" min="2020" max="2035" value="2026">
       </div>
       <div class="config-group">
@@ -1216,7 +1218,7 @@ function mostrarVista(nom){
   if(nom==="mensual") renderMes();
   if(nom==="calendari") renderCalendariAnual();
   if(nom==="judicis") renderJudicis();
-  if(nom==="config") carregarConfigUI();
+  if(nom==="config"){ carregarConfigUI(); actualitzarSelectorAnys(); }
 }
 document.getElementById("j-cobrament").addEventListener("change", function(){
   if(this.checked) soCaixa();
