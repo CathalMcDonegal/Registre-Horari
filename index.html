@@ -656,11 +656,7 @@ function omplirSelectsTorns(){
 }
 
 function calcularResum(){
-  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,extresUsades=0,diesTreball=0;
-  // planificades = el que resta del còmput 1580: torns de treball + assumptes personals
-  // vacances NO resten del 1580; acumulades NO resten del 1580
-  // Matí: suma 0.5h a acumulades a més de les hores del torn al còmput
-  let acumUsades=0, extresUsades=0;
+  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,extresUsades=0,acumUsades=0,diesTreball=0;
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
