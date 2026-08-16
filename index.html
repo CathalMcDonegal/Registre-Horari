@@ -344,7 +344,7 @@
         <div class="hint">Escriu l'hora en format 07:00 o 14:30</div>
         <label>Hores reals treballades</label>
         <input type="number" id="edit-hores" min="0" max="24" step="0.25" value="7.5">
-        <div class="hint">Si fas més hores de les del torn, l'excés va a hores acumulades</div>
+        <div class="hint">Totes les hores restaran del còmput general. Si en fas més de les del torn (7,5 / 9 / 12), la diferència anirà a hores acumulades.</div>
       </div>
       <div id="bloc-hores-concepte" style="display:none">
         <label>Hores d'aquest concepte</label>
@@ -663,17 +663,18 @@ function calcularResum(){
       const torn=getTorn(r.torn); const hp=torn?torn.hores:0; const hr=parseFloat(r.hores)||0;
       const nom=(torn?.nom||"").toLowerCase();
       const id=torn?.id||"";
-      const esFesta = id==="festa" || nom.includes("festa") && !nom.includes("festiu");
-      // Torn festa 7.5h: SUMA al còmput (no resta)
+      const esFesta = id==="festa" || (nom.includes("festa") && !nom.includes("festiu"));
+      // Torn festa: SUMA al còmput (no resta)
       if(esFesta){
-        planificades-=hr; // sumar al restant = restar de planificades
+        planificades-=hr;
         diesTreball++;
       } else {
-        planificades+=hr; diesTreball++;
+        // Totes les hores reals resten del còmput general (1580)
+        planificades+=hr;
+        diesTreball++;
+        // L'excés sobre les hores del torn (7.5 / 9 / 12) va a hores acumulades
         if(hr>hp) acumuladesExtra+=(hr-hp);
-        if(id==="mati" || nom.includes("matí") || nom.includes("mati")){
-          acumuladesExtra+=0.5;
-        }
+        // Nits: també descompten del còmput d'hores nocturnes
         if(id==="nit" || id==="cs_nit" || id==="fn" || nom.includes("nit")){
           gnitUsades+=hr;
         }
