@@ -131,6 +131,7 @@
     .cal-day.t-vacances, .day-item.t-vacances { background: #86efac !important; border-color: #16a34a !important; }
     .cal-day.t-festa, .day-item.t-festa { background: #86efac !important; border-color: #16a34a !important; }
     .cal-day.t-hores_acum, .day-item.t-hores_acum { background: #4ade80 !important; border-color: #15803d !important; }
+    .cal-day.t-hores_extres, .day-item.t-hores_extres { background: #f9a8d4 !important; border-color: #db2777 !important; }
     .cal-day.t-assumptes, .day-item.t-assumptes { background: #bbf7d0 !important; border-color: #22c55e !important; }
     .cal-day.t-guardia_np, .day-item.t-guardia_np { background: #fde047 !important; border-color: #eab308 !important; }
     .cal-day.t-altres, .day-item.t-altres { background: #dcfce7 !important; border-color: #166534 !important; }
@@ -163,9 +164,14 @@
 </head>
 <body>
   <div class="header">
-    <div>
+    <div style="flex:1;min-width:0">
       <h1 id="app-titol">Registre Horari</h1>
       <div class="subtitle" id="app-subtitol">Mossos d'Esquadra · Personal</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button type="button" id="btn-any-prev" onclick="canviarAny(-1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;color:var(--text)">‹</button>
+      <select id="sel-any" onchange="seleccionarAny(this.value)" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-weight:700;font-size:0.9rem;color:var(--text);max-width:90px"></select>
+      <button type="button" id="btn-any-next" onclick="canviarAny(1)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;font-size:1.1rem;cursor:pointer;color:var(--text)">›</button>
     </div>
   </div>
 
@@ -186,20 +192,26 @@
       <div class="card-title">Vacances i permisos</div>
       <div class="stats">
         <div class="stat purple"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances restants</div></div>
-        <div class="stat green"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades</div></div>
+        <div class="stat green" style="cursor:pointer" onclick="mostrarDiesTipus('vacances')"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades ▸</div></div>
         <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
-        <div class="stat cyan"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats</div></div>
+        <div class="stat cyan" style="cursor:pointer" onclick="mostrarDiesTipus('assumptes')"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats ▸</div></div>
         <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades (banc)</div></div>
-        <div class="stat red"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades</div></div>
+        <div class="stat red" style="cursor:pointer" onclick="mostrarDiesTipus('hores_acum')"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades ▸</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Hores extres</div>
+      <div class="stats">
+        <div class="stat pink" style="cursor:pointer" onclick="mostrarDiesTipus('hores_extres')"><div class="value" id="stat-extres">0</div><div class="label">Hores extres realitzades ▸</div></div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Guàrdies</div>
       <div class="stats">
         <div class="stat blue"><div class="value" id="stat-gnp-rest">0</div><div class="label">GNP restants</div></div>
-        <div class="stat cyan"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP realitzades</div></div>
+        <div class="stat cyan" style="cursor:pointer" onclick="mostrarDiesTipus('guardia_np')"><div class="value" id="stat-gnp-usades">0</div><div class="label">GNP realitzades ▸</div></div>
         <div class="stat purple"><div class="value" id="stat-gnit-rest">0</div><div class="label">G. Nit restants</div></div>
-        <div class="stat pink"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit realitzades</div></div>
+        <div class="stat pink" style="cursor:pointer" onclick="mostrarDiesTipus('nits')"><div class="value" id="stat-gnit-usades">0</div><div class="label">G. Nit realitzades ▸</div></div>
       </div>
       <div style="margin-top:10px">
         <div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px">Guàrdies de nit respecte al còmput anual (<span id="stat-gnit-pct">0</span>%)</div>
@@ -317,6 +329,7 @@
         <option value="baixa">Baixa</option>
         <option value="guardia_np">Guàrdia No Presencial</option>
         <option value="hores_acum">Hores acumulades</option>
+        <option value="hores_extres">Hores extres</option>
         <option value="altres">Altres / Permís</option>
       </select>
       <div id="bloc-treball" style="display:none">
@@ -376,6 +389,7 @@
         <option value="baixa">Baixa</option>
         <option value="guardia_np">Guàrdia No Presencial</option>
         <option value="hores_acum">Hores acumulades</option>
+        <option value="hores_extres">Hores extres</option>
         <option value="altres">Altres</option>
         <option value="esborrar">Esborrar registres</option>
       </select>
@@ -388,6 +402,17 @@
         <input type="number" id="massiu-hores" min="0" step="0.25" value="7.5">
       </div>
       <button class="btn btn-primary" onclick="confirmarMassiu()">Aplicar</button>
+    </div>
+  </div>
+
+  
+  <div class="modal-overlay" id="modal-dies">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-dies-titol">Resum</h2>
+        <button class="modal-close" onclick="tancarModalDies()">×</button>
+      </div>
+      <div id="modal-dies-llista" style="font-size:0.9rem"></div>
     </div>
   </div>
 
@@ -433,6 +458,8 @@ const TIPUS_COLORS = {
   baixa:{color:"#fca5a5",border:"#dc2626"},
   guardia_np:{color:"#fde047",border:"#eab308"},
   hores_acum:{color:"#4ade80",border:"#15803d"},
+  hores_extres:{color:"#fbcfe8",border:"#db2777"},
+  hores_extres:{color:"#f9a8d4",border:"#db2777"},
   altres:{color:"#dcfce7",border:"#166534"},
   judici:{color:"#e9d5ff",border:"#7c3aed"}
 };
@@ -447,7 +474,7 @@ const FESTIUS_DEFAULT = {
 };
 const TIPUS_NOMS = {
   treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",baixa:"Baixa",
-  guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",guardia_nit:"Guàrdia de nit",altres:"Altres"
+  guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",hores_extres:"Hores extres",altres:"Altres"
 };
 
 let estat = {
@@ -455,10 +482,95 @@ let estat = {
   anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68,
   gnpTotals:0, gnitTotals:0, acumTotals:0,
   torns: JSON.parse(JSON.stringify(TORN_DEFAULT)),
-  festius: {...FESTIUS_DEFAULT}, registres:{}, judicis:[]
+  festius: {...FESTIUS_DEFAULT}, registres:{}, judicis:[],
+  historic: {}  // { "2025": { registres, judicis, festius, horesAnuals, ... }, ... }
 };
 let mesActual = new Date().getMonth(), anyActualVista = new Date().getFullYear();
 let diaEdicio=null, judiciEdicio=null, multiMode=false, seleccionats=new Set();
+
+function snapshotAny(){
+  return {
+    horesAnuals: estat.horesAnuals,
+    vacancesTotals: estat.vacancesTotals,
+    assumptesTotals: estat.assumptesTotals,
+    gnpTotals: estat.gnpTotals,
+    gnitTotals: estat.gnitTotals,
+    acumTotals: estat.acumTotals||0,
+    festius: JSON.parse(JSON.stringify(estat.festius||{})),
+    registres: JSON.parse(JSON.stringify(estat.registres||{})),
+    judicis: JSON.parse(JSON.stringify(estat.judicis||[]))
+  };
+}
+function carregarAny(any){
+  // Desa l'any actual a l'històric
+  if(!estat.historic) estat.historic = {};
+  estat.historic[String(estat.anyInici)] = snapshotAny();
+  // Carrega l'any demanat (o crea buit)
+  const clau = String(any);
+  const dades = estat.historic[clau];
+  estat.anyInici = any;
+  if(dades){
+    estat.horesAnuals = dades.horesAnuals ?? 1580;
+    estat.vacancesTotals = dades.vacancesTotals ?? 200;
+    estat.assumptesTotals = dades.assumptesTotals ?? 68;
+    estat.gnpTotals = dades.gnpTotals ?? 0;
+    estat.gnitTotals = dades.gnitTotals ?? 0;
+    estat.acumTotals = dades.acumTotals ?? 0;
+    estat.festius = dades.festius || {...FESTIUS_DEFAULT};
+    estat.registres = dades.registres || {};
+    estat.judicis = dades.judicis || [];
+  } else {
+    estat.horesAnuals = 1580;
+    estat.vacancesTotals = 200;
+    estat.assumptesTotals = 68;
+    estat.gnpTotals = 0;
+    estat.gnitTotals = 0;
+    estat.acumTotals = 0;
+    estat.festius = {...FESTIUS_DEFAULT};
+    estat.registres = {};
+    estat.judicis = [];
+  }
+  anyActualVista = any;
+  mesActual = 1; // febrer
+  seleccionats.clear();
+  multiMode = false;
+  desar();
+  actualitzarSelectorAnys();
+  actualitzarVistaAnual();
+  renderMes();
+  renderCalendariAnual();
+  renderJudicis();
+}
+function actualitzarSelectorAnys(){
+  if(!estat.historic) estat.historic = {};
+  // Assegura que l'any actual està a la llista
+  estat.historic[String(estat.anyInici)] = estat.historic[String(estat.anyInici)] || snapshotAny();
+  const anys = new Set(Object.keys(estat.historic).map(Number));
+  anys.add(estat.anyInici);
+  // Afegeix any següent per si volen començar-ne un de nou
+  anys.add(estat.anyInici + 1);
+  const llista = [...anys].sort((a,b)=>a-b);
+  const sel = document.getElementById("sel-any");
+  if(!sel) return;
+  sel.innerHTML = llista.map(a =>
+    `<option value="${a}" ${a===estat.anyInici?"selected":""}>${a}</option>`
+  ).join("");
+}
+function seleccionarAny(val){
+  const any = parseInt(val, 10);
+  if(!any || any === estat.anyInici) return;
+  if(confirm("Canviar a l'any "+any+"?\nLes dades de l'any actual es conservaran a l'històric.")){
+    carregarAny(any);
+  } else {
+    actualitzarSelectorAnys();
+  }
+}
+function canviarAny(dir){
+  const nou = estat.anyInici + dir;
+  if(confirm("Canviar a l'any "+nou+"?\nLes dades de l'any actual es conservaran a l'històric.")){
+    carregarAny(nou);
+  }
+}
 
 function carregar() {
   const raw = localStorage.getItem("registreHorariMossos");
@@ -477,14 +589,31 @@ function carregar() {
       if (!estat.festius) estat.festius = {...FESTIUS_DEFAULT};
       if (!estat.judicis) estat.judicis = [];
       if (estat.acumTotals === undefined) estat.acumTotals = 0;
+      if (!estat.historic) estat.historic = {};
+      // Migració: desa l'any actual a l'històric si no hi és
+      if (!estat.historic[String(estat.anyInici)]) {
+        estat.historic[String(estat.anyInici)] = {
+          horesAnuals: estat.horesAnuals, vacancesTotals: estat.vacancesTotals,
+          assumptesTotals: estat.assumptesTotals, gnpTotals: estat.gnpTotals,
+          gnitTotals: estat.gnitTotals, acumTotals: estat.acumTotals||0,
+          festius: JSON.parse(JSON.stringify(estat.festius||{})),
+          registres: JSON.parse(JSON.stringify(estat.registres||{})),
+          judicis: JSON.parse(JSON.stringify(estat.judicis||[]))
+        };
+      }
     } catch(e){}
   }
+  if (!estat.historic) estat.historic = {};
   const ara = new Date();
   if (ara.getMonth()===0){ anyActualVista=ara.getFullYear()-1; mesActual=0; }
   else { anyActualVista=ara.getFullYear(); mesActual=ara.getMonth(); }
-  actualitzarTitol(); omplirSelectsTorns();
+  actualitzarTitol(); omplirSelectsTorns(); actualitzarSelectorAnys();
 }
-function desar(){ localStorage.setItem("registreHorariMossos", JSON.stringify(estat)); }
+function desar(){
+  if(!estat.historic) estat.historic = {};
+  estat.historic[String(estat.anyInici)] = snapshotAny();
+  localStorage.setItem("registreHorariMossos", JSON.stringify(estat));
+}
 function actualitzarTitol(){
   document.getElementById("app-titol").textContent = estat.titol||"Registre Horari";
   document.getElementById("app-subtitol").textContent = estat.subtitol||"";
@@ -525,11 +654,11 @@ function omplirSelectsTorns(){
 }
 
 function calcularResum(){
-  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,diesTreball=0;
+  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,extresUsades=0,diesTreball=0;
   // planificades = el que resta del còmput 1580: torns de treball + assumptes personals
   // vacances NO resten del 1580; acumulades NO resten del 1580
   // Matí: suma 0.5h a acumulades a més de les hores del torn al còmput
-  let acumUsades=0;
+  let acumUsades=0, extresUsades=0;
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
@@ -564,11 +693,13 @@ function calcularResum(){
     } else if(r.tipus==="guardia_np") gnpUsades+=parseFloat(r.horesConcepte)||0;
     else if(r.tipus==="hores_acum"){
       acumUsades+=parseFloat(r.horesConcepte)||7.5;
+    } else if(r.tipus==="hores_extres"){
+      extresUsades+=parseFloat(r.horesConcepte)||0;
     }
   }
   return {
     treballades:+planificades.toFixed(2), restants:+(estat.horesAnuals-planificades).toFixed(2),
-    acumulades:+((estat.acumTotals||0)+acumuladesExtra-acumUsades).toFixed(2), acumExtra:+acumuladesExtra.toFixed(2), acumUsades:+acumUsades.toFixed(2), percent:estat.horesAnuals>0?Math.round(planificades/estat.horesAnuals*100):0,
+    acumulades:+((estat.acumTotals||0)+acumuladesExtra-acumUsades).toFixed(2), acumExtra:+acumuladesExtra.toFixed(2), acumUsades:+acumUsades.toFixed(2), extresUsades:+extresUsades.toFixed(2), percent:estat.horesAnuals>0?Math.round(planificades/estat.horesAnuals*100):0,
     vacUsades:+vacUsades.toFixed(2), vacRestants:+(estat.vacancesTotals-vacUsades).toFixed(2),
     persUsades:+persUsades.toFixed(2), persRestants:+(estat.assumptesTotals-persUsades).toFixed(2),
     gnpUsades:+gnpUsades.toFixed(2), gnpRestants:+(estat.gnpTotals-gnpUsades).toFixed(2),
@@ -592,6 +723,8 @@ function actualitzarVistaAnual(){
   document.getElementById("stat-gnit-rest").textContent=r.gnitRestants;
   document.getElementById("stat-gnp-usades").textContent=r.gnpUsades;
   document.getElementById("stat-gnit-usades").textContent=r.gnitUsades;
+  const elEx=document.getElementById("stat-extres");
+  if(elEx) elEx.textContent=r.extresUsades||0;
   const gnitPct = estat.horesAnuals > 0 ? Math.round((r.gnitUsades / estat.horesAnuals) * 1000) / 10 : 0;
   const elPct = document.getElementById("stat-gnit-pct");
   if(elPct) elPct.textContent = gnitPct;
@@ -640,7 +773,7 @@ function renderCalendariAnual(){
       if(seleccionats.has(clau)) cls+=" selected";
       let ab="";
       if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; if(tn){ cls+=" t-"+tn.id; if(tn.id==="festa") cls+=" t-festa"; } }
-      else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","baixa":"Bxa","guardia_np":"GNP","hores_acum":"HA","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
+      else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","baixa":"Bxa","guardia_np":"GNP","hores_acum":"HA","hores_extres":"HE","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
       if(hasJud && !ab) ab="J";
       else if(hasJud && ab) ab=ab+"/J";
       let st="";
@@ -696,6 +829,8 @@ function renderMes(){
         else if(reg.tipus==="baixa") badgeClass="badge-baixa";
         else if(reg.tipus==="guardia_np") badgeClass="badge-gnp";
         else if(reg.tipus==="hores_acum") badgeClass="badge-vac";
+        else if(reg.tipus==="hores_extres") badgeClass="badge-gnit";
+        else if(reg.tipus==="hores_extres") badgeClass="badge-pers";
         else if(reg.tipus==="guardia_nit") badgeClass="badge-gnit";
       }
       if(reg.notes) detail+=(detail?" · ":"")+reg.notes.substring(0,25);
@@ -819,7 +954,7 @@ function tancarModal(){ document.getElementById("modal").classList.remove("open"
 function canviarTipus(forceDefaults){
   const tipus=document.getElementById("edit-tipus").value;
   document.getElementById("bloc-treball").style.display=tipus==="treball"?"block":"none";
-  document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","baixa","guardia_np","hores_acum","altres"].includes(tipus)?"block":"none";
+  document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","baixa","guardia_np","hores_acum","hores_extres","altres"].includes(tipus)?"block":"none";
   if(tipus==="treball" && forceDefaults){
     const torn=getTorn(document.getElementById("edit-torn").value);
     if(torn){ document.getElementById("edit-hores").value=torn.hores; document.getElementById("edit-entrada").value=torn.inici; document.getElementById("edit-sortida").value=torn.fi; }
@@ -891,6 +1026,29 @@ function obrirJudici(idx){
   document.getElementById("modal-judici").classList.add("open");
 }
 function tancarModalJudici(){ document.getElementById("modal-judici").classList.remove("open"); judiciEdicio=null; }
+
+function soCaixa(){
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // "cha-ching" estil caixa: dos tons + click
+    function beep(freq, start, dur, type, vol){
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.type=type||"square";
+      o.frequency.setValueAtTime(freq, now+start);
+      g.gain.setValueAtTime(0.0001, now+start);
+      g.gain.exponentialRampToValueAtTime(vol||0.15, now+start+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+start+dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now+start); o.stop(now+start+dur+0.02);
+    }
+    beep(1200, 0, 0.08, "square", 0.12);
+    beep(1800, 0.08, 0.12, "square", 0.15);
+    beep(2400, 0.16, 0.15, "triangle", 0.1);
+  } catch(e){}
+}
+
 function desarJudici(){
   const j={
     data:document.getElementById("j-data").value, hora:document.getElementById("j-hora").value,
@@ -900,8 +1058,10 @@ function desarJudici(){
     canviTorn:document.getElementById("j-canvi").checked
   };
   if(!j.data){ alert("Cal indicar la data"); return; }
+  const abans = judiciEdicio!==null ? estat.judicis[judiciEdicio] : null;
+  if(j.cobrament && (!abans || !abans.cobrament)) soCaixa();
   if(judiciEdicio!==null) estat.judicis[judiciEdicio]=j; else estat.judicis.push(j);
-  desar(); tancarModalJudici(); renderJudicis(); renderMes();
+  desar(); tancarModalJudici(); renderJudicis(); renderMes(); actualitzarVistaAnual();
 }
 function esborrarJudici(){
   if(judiciEdicio===null||!confirm("Esborrar aquest judici?")) return;
@@ -993,6 +1153,60 @@ function resetDades(){
     desar(); renderMes(); renderCalendariAnual(); renderJudicis(); actualitzarVistaAnual();
   }
 }
+
+function mostrarDiesTipus(tipus){
+  const titols = {
+    vacances:"Vacances realitzades",
+    assumptes:"Assumptes personals realitzats",
+    hores_acum:"Hores acumulades usades",
+    hores_extres:"Hores extres realitzades",
+    guardia_np:"GNP realitzades",
+    nits:"Guàrdies / torns de nit"
+  };
+  document.getElementById("modal-dies-titol").textContent = titols[tipus]||tipus;
+  const dies = [];
+  for(const clau in estat.registres){
+    const r = estat.registres[clau];
+    if(!r?.tipus) continue;
+    let match = false;
+    let hores = 0;
+    let detall = "";
+    if(tipus==="nits"){
+      if(r.tipus==="treball"){
+        const torn=getTorn(r.torn);
+        const id=torn?.id||"";
+        const nom=(torn?.nom||"").toLowerCase();
+        if(id==="nit"||id==="cs_nit"||id==="fn"||nom.includes("nit")){
+          match=true; hores=parseFloat(r.hores)||0; detall=torn?.abbr||"Nit";
+        }
+      }
+    } else if(r.tipus===tipus){
+      match=true;
+      hores=parseFloat(r.horesConcepte||r.hores)||0;
+      detall=TIPUS_NOMS[r.tipus]||r.tipus;
+      if(r.tipus==="treball"){ const t=getTorn(r.torn); detall=t?.abbr||detall; }
+    }
+    if(match){
+      const d=new Date(clau+"T12:00:00");
+      dies.push({clau, data: d.getDate()+" "+MESOS[d.getMonth()]+" "+d.getFullYear(), hores, detall, weekday: DIES_SET[(d.getDay()+6)%7]});
+    }
+  }
+  dies.sort((a,b)=>a.clau.localeCompare(b.clau));
+  const cont=document.getElementById("modal-dies-llista");
+  if(!dies.length){
+    cont.innerHTML='<div style="color:var(--text2);padding:12px 0">Cap dia registrat</div>';
+  } else {
+    const total=dies.reduce((s,x)=>s+x.hores,0);
+    cont.innerHTML=`<div style="margin-bottom:10px;color:var(--text2)">Total: <strong style="color:var(--text)">${total.toFixed(2)} h</strong> · ${dies.length} dia(es)</div>`+
+      dies.map(d=>`<div onclick="tancarModalDies();mostrarVista('mensual');const dt=new Date('${d.clau}T12:00:00');mesActual=dt.getMonth();anyActualVista=dt.getFullYear();renderMes();setTimeout(()=>obrirDia('${d.clau}'),200)" style="padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;gap:8px">
+        <div><strong>${d.data}</strong> <span style="color:var(--text2);font-size:0.8rem">(${d.weekday})</span><div style="font-size:0.8rem;color:var(--text2)">${d.detall}</div></div>
+        <div style="font-weight:700;white-space:nowrap">${d.hores} h</div>
+      </div>`).join("");
+  }
+  document.getElementById("modal-dies").classList.add("open");
+}
+function tancarModalDies(){ document.getElementById("modal-dies").classList.remove("open"); }
+
 function mostrarVista(nom){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById("view-"+nom).classList.add("active");
@@ -1004,6 +1218,9 @@ function mostrarVista(nom){
   if(nom==="judicis") renderJudicis();
   if(nom==="config") carregarConfigUI();
 }
+document.getElementById("j-cobrament").addEventListener("change", function(){
+  if(this.checked) soCaixa();
+});
 carregar(); actualitzarVistaAnual(); renderMes();
 </script>
 </body>
