@@ -344,7 +344,7 @@
         <div class="hint">Escriu l'hora en format 07:00 o 14:30</div>
         <label>Hores reals treballades</label>
         <input type="number" id="edit-hores" min="0" max="24" step="0.25" value="7.5">
-        <div class="hint">Totes les hores restaran del còmput general. Si en fas més de les del torn (7,5 / 9 / 12), la diferència anirà a hores acumulades.</div>
+        <div class="hint">Matí: per defecte 8 h (−8 al còmput i +0,5 a acumulades). Si en fas més, tot resta del còmput i l'excés sobre 7,5 va a acumulades. Resta de torns: igual (excés sobre 7,5 / 9 / 12).</div>
       </div>
       <div id="bloc-hores-concepte" style="display:none">
         <label>Hores d'aquest concepte</label>
@@ -592,6 +592,21 @@ function carregar() {
       if (!estat.judicis) estat.judicis = [];
       if (estat.acumTotals === undefined) estat.acumTotals = 0;
       if (!estat.historic) estat.historic = {};
+      // Migració matins: 7.5h del torn → 8h (defecte real)
+      let migrat=false;
+      for(const clau in (estat.registres||{})){
+        const r=estat.registres[clau];
+        if(r?.tipus==="treball" && r.torn){
+          const t=(estat.torns||[]).find(x=>x.id===r.torn);
+          const nom=(t?.nom||"").toLowerCase();
+          const esMati=r.torn==="mati" || (t&&(t.id==="mati"||nom.includes("matí")||nom.includes("mati")));
+          const hp=t?t.hores:7.5;
+          if(esMati && Math.abs((parseFloat(r.hores)||0)-hp)<0.01){
+            r.hores=8; migrat=true;
+          }
+        }
+      }
+      if(migrat){ /* es desarà al final si cal */ }
       // Migració: desa l'any actual a l'històric si no hi és
       if (!estat.historic[String(estat.anyInici)]) {
         estat.historic[String(estat.anyInici)] = {
@@ -610,6 +625,8 @@ function carregar() {
   if (ara.getMonth()===0){ anyActualVista=ara.getFullYear()-1; mesActual=0; }
   else { anyActualVista=ara.getFullYear(); mesActual=ara.getMonth(); }
   actualitzarTitol(); omplirSelectsTorns(); actualitzarSelectorAnys();
+  // Desa si hi ha hagut migració de matins
+  try { desar(); } catch(e){}
 }
 function desar(){
   if(!estat.historic) estat.historic = {};
@@ -660,21 +677,21 @@ function calcularResum(){
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
-      const torn=getTorn(r.torn); const hp=torn?torn.hores:0; const hr=parseFloat(r.hores)||0;
+      const torn=getTorn(r.torn); const hp=torn?torn.hores:0;
+      let hr=parseFloat(r.hores)||0;
       const nom=(torn?.nom||"").toLowerCase();
       const id=torn?.id||"";
+      const esMati = id==="mati" || nom.includes("matí") || nom.includes("mati");
       const esFesta = id==="festa" || (nom.includes("festa") && !nom.includes("festiu"));
-      // Torn festa: SUMA al còmput (no resta)
+      // Matí ja planificat amb 7.5 (hores del torn): compta com a 8h per defecte
+      if(esMati && hp>0 && Math.abs(hr-hp)<0.01) hr=8;
       if(esFesta){
         planificades-=hr;
         diesTreball++;
       } else {
-        // Totes les hores reals resten del còmput general (1580)
         planificades+=hr;
         diesTreball++;
-        // L'excés sobre les hores del torn (7.5 / 9 / 12) va a hores acumulades
         if(hr>hp) acumuladesExtra+=(hr-hp);
-        // Nits: també descompten del còmput d'hores nocturnes
         if(id==="nit" || id==="cs_nit" || id==="fn" || nom.includes("nit")){
           gnitUsades+=hr;
         }
@@ -923,7 +940,7 @@ function confirmarMassiu(){
     if(tipus==="esborrar") delete estat.registres[clau];
     else if(tipus==="treball"){
       const tornId=document.getElementById("massiu-torn").value, torn=getTorn(tornId);
-      estat.registres[clau]={tipus:"treball",torn:tornId,hores:torn.hores,entrada:torn.inici,sortida:torn.fi,notes:""};
+      estat.registres[clau]={tipus:"treball",torn:tornId,hores:horesDefecteTorn(torn),entrada:torn.inici,sortida:torn.fi,notes:""};
     } else {
       estat.registres[clau]={tipus,horesConcepte:parseFloat(document.getElementById("massiu-hores").value)||0,notes:""};
     }
@@ -940,7 +957,7 @@ function obrirDia(clau){
   omplirSelectsTorns();
   document.getElementById("edit-torn").value=reg.torn||(estat.torns[0]?.id||"mati");
   const torn=getTorn(reg.torn||"mati");
-  document.getElementById("edit-hores").value=reg.hores!=null?reg.hores:(torn?.hores||7.5);
+  document.getElementById("edit-hores").value=reg.hores!=null?reg.hores:horesDefecteTorn(torn);
   document.getElementById("edit-entrada").value=reg.entrada||torn?.inici||"07:00";
   document.getElementById("edit-sortida").value=reg.sortida||torn?.fi||"14:30";
   document.getElementById("edit-hores-concepte").value=reg.horesConcepte!=null?reg.horesConcepte:7.5;
@@ -956,15 +973,31 @@ function canviarTipus(forceDefaults){
   document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","baixa","guardia_np","hores_acum","hores_extres","altres"].includes(tipus)?"block":"none";
   if(tipus==="treball" && forceDefaults){
     const torn=getTorn(document.getElementById("edit-torn").value);
-    if(torn){ document.getElementById("edit-hores").value=torn.hores; document.getElementById("edit-entrada").value=torn.inici; document.getElementById("edit-sortida").value=torn.fi; }
+    if(torn){
+      document.getElementById("edit-hores").value=horesDefecteTorn(torn);
+      document.getElementById("edit-entrada").value=torn.inici;
+      document.getElementById("edit-sortida").value=torn.fi;
+    }
   }
   if(tipus==="hores_acum" && forceDefaults){
     document.getElementById("edit-hores-concepte").value=7.5;
   }
 }
+function horesDefecteTorn(torn){
+  if(!torn) return 7.5;
+  // Matí: per defecte sempre 8h (7.5 del torn + 0.5 a acumulades)
+  if(torn.id==="mati" || (torn.nom||"").toLowerCase().includes("matí") || (torn.nom||"").toLowerCase().includes("mati")){
+    return 8;
+  }
+  return torn.hores;
+}
 document.getElementById("edit-torn").addEventListener("change",function(){
   const torn=getTorn(this.value);
-  if(torn){ document.getElementById("edit-hores").value=torn.hores; document.getElementById("edit-entrada").value=torn.inici; document.getElementById("edit-sortida").value=torn.fi; }
+  if(torn){
+    document.getElementById("edit-hores").value=horesDefecteTorn(torn);
+    document.getElementById("edit-entrada").value=torn.inici;
+    document.getElementById("edit-sortida").value=torn.fi;
+  }
 });
 document.getElementById("edit-tipus").addEventListener("change",function(){
   canviarTipus(this.value==="treball");
