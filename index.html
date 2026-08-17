@@ -9,6 +9,9 @@
   <meta name="description" content="Registre horari personal">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <title>Registre Horari</title>
   <style>
     :root {
@@ -129,6 +132,7 @@
     .cal-day.t-guardia_nit, .day-item.t-guardia_nit { background: #bfdbfe !important; border-color: #3b82f6 !important; }
     /* Verds = vacances, AP, festa-related, acumulades */
     .cal-day.t-vacances, .day-item.t-vacances { background: #86efac !important; border-color: #16a34a !important; }
+    .cal-day.t-dies_blaus, .day-item.t-dies_blaus { background: #ecfdf5 !important; border-color: #6ee7b7 !important; }
     .cal-day.t-festa, .day-item.t-festa { background: #86efac !important; border-color: #16a34a !important; }
     .cal-day.t-hores_acum, .day-item.t-hores_acum { background: #4ade80 !important; border-color: #15803d !important; }
     .cal-day.t-hores_extres, .day-item.t-hores_extres { background: #f9a8d4 !important; border-color: #db2777 !important; }
@@ -188,9 +192,11 @@
       <div class="stats">
         <div class="stat purple"><div class="value" id="stat-vac-rest">200</div><div class="label">Vacances restants</div></div>
         <div class="stat green" style="cursor:pointer" onclick="mostrarDiesTipus('vacances')"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades ▸</div></div>
-        <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes restants</div></div>
+        <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes personals</div></div>
         <div class="stat cyan" style="cursor:pointer" onclick="mostrarDiesTipus('assumptes')"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats ▸</div></div>
-        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades (banc)</div></div>
+        <div class="stat" style="background:#ecfdf5;border-color:#a7f3d0"><div class="value" id="stat-blaus-rest" style="color:#059669">0</div><div class="label">Dies Blaus restants</div></div>
+        <div class="stat" style="cursor:pointer;background:#f0fdf4;border-color:#bbf7d0" onclick="mostrarDiesTipus('dies_blaus')"><div class="value" id="stat-blaus-usades" style="color:#16a34a">0</div><div class="label">Dies Blaus usats ▸</div></div>
+        <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
         <div class="stat red" style="cursor:pointer" onclick="mostrarDiesTipus('hores_acum')"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades ▸</div></div>
       </div>
     </div>
@@ -294,6 +300,8 @@
         <input type="number" id="cfg-vacances" min="0" step="0.5" value="200">
         <label>Hores d'assumptes personals</label>
         <input type="number" id="cfg-assumptes" min="0" step="0.5" value="68">
+        <label>Dies Blaus (hores)</label>
+        <input type="number" id="cfg-blaus" min="0" step="0.5" value="0">
         <label>Hores Guàrdies No Presencials</label>
         <input type="number" id="cfg-gnp" min="0" step="0.5" value="0">
         <label>Hores Guàrdies de nit</label>
@@ -328,6 +336,7 @@
         <option value="treball">Treball</option>
         <option value="vacances">Vacances</option>
         <option value="assumptes">Assumptes personals</option>
+        <option value="dies_blaus">Dies Blaus</option>
         <option value="baixa">Baixa</option>
         <option value="guardia_np">Guàrdia No Presencial</option>
         <option value="hores_acum">Hores acumulades</option>
@@ -388,6 +397,7 @@
         <option value="treball">Treball (torn)</option>
         <option value="vacances">Vacances</option>
         <option value="assumptes">Assumptes personals</option>
+        <option value="dies_blaus">Dies Blaus</option>
         <option value="baixa">Baixa</option>
         <option value="guardia_np">Guàrdia No Presencial</option>
         <option value="hores_acum">Hores acumulades</option>
@@ -457,6 +467,7 @@ const TORN_DEFAULT = [
 const TIPUS_COLORS = {
   vacances:{color:"#86efac",border:"#16a34a"},
   assumptes:{color:"#bbf7d0",border:"#22c55e"},
+  dies_blaus:{color:"#ecfdf5",border:"#6ee7b7"},
   baixa:{color:"#fca5a5",border:"#dc2626"},
   guardia_np:{color:"#fde047",border:"#eab308"},
   hores_acum:{color:"#4ade80",border:"#15803d"},
@@ -475,13 +486,13 @@ const FESTIUS_DEFAULT = {
   "2027-01-01":"Cap d'Any (E)","2027-01-06":"Reis (E)"
 };
 const TIPUS_NOMS = {
-  treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",baixa:"Baixa",
+  treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",dies_blaus:"Dies Blaus",baixa:"Baixa",
   guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",hores_extres:"Hores extres",altres:"Altres"
 };
 
 let estat = {
   titol:"Registre Horari", subtitol:"Mossos d'Esquadra · Personal",
-  anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68,
+  anyInici:2026, horesAnuals:1580, vacancesTotals:200, assumptesTotals:68, blausTotals:0,
   gnpTotals:0, gnitTotals:0, acumTotals:0,
   torns: JSON.parse(JSON.stringify(TORN_DEFAULT)),
   festius: {...FESTIUS_DEFAULT}, registres:{}, judicis:[],
@@ -495,6 +506,7 @@ function snapshotAny(){
     horesAnuals: estat.horesAnuals,
     vacancesTotals: estat.vacancesTotals,
     assumptesTotals: estat.assumptesTotals,
+    blausTotals: estat.blausTotals||0,
     gnpTotals: estat.gnpTotals,
     gnitTotals: estat.gnitTotals,
     acumTotals: estat.acumTotals||0,
@@ -515,6 +527,7 @@ function carregarAny(any){
     estat.horesAnuals = dades.horesAnuals ?? 1580;
     estat.vacancesTotals = dades.vacancesTotals ?? 200;
     estat.assumptesTotals = dades.assumptesTotals ?? 68;
+    estat.blausTotals = dades.blausTotals ?? 0;
     estat.gnpTotals = dades.gnpTotals ?? 0;
     estat.gnitTotals = dades.gnitTotals ?? 0;
     estat.acumTotals = dades.acumTotals ?? 0;
@@ -525,6 +538,7 @@ function carregarAny(any){
     estat.horesAnuals = 1580;
     estat.vacancesTotals = 200;
     estat.assumptesTotals = 68;
+    estat.blausTotals = 0;
     estat.gnpTotals = 0;
     estat.gnitTotals = 0;
     estat.acumTotals = 0;
@@ -591,6 +605,7 @@ function carregar() {
       if (!estat.festius) estat.festius = {...FESTIUS_DEFAULT};
       if (!estat.judicis) estat.judicis = [];
       if (estat.acumTotals === undefined) estat.acumTotals = 0;
+      if (estat.blausTotals === undefined) estat.blausTotals = 0;
       if (!estat.historic) estat.historic = {};
       // Migració matins: 7.5h del torn → 8h (defecte real)
       let migrat=false;
@@ -611,7 +626,7 @@ function carregar() {
       if (!estat.historic[String(estat.anyInici)]) {
         estat.historic[String(estat.anyInici)] = {
           horesAnuals: estat.horesAnuals, vacancesTotals: estat.vacancesTotals,
-          assumptesTotals: estat.assumptesTotals, gnpTotals: estat.gnpTotals,
+          assumptesTotals: estat.assumptesTotals, blausTotals: estat.blausTotals||0, gnpTotals: estat.gnpTotals,
           gnitTotals: estat.gnitTotals, acumTotals: estat.acumTotals||0,
           festius: JSON.parse(JSON.stringify(estat.festius||{})),
           registres: JSON.parse(JSON.stringify(estat.registres||{})),
@@ -673,7 +688,7 @@ function omplirSelectsTorns(){
 }
 
 function calcularResum(){
-  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,gnpUsades=0,gnitUsades=0,extresUsades=0,acumUsades=0,diesTreball=0;
+  let planificades=0,acumuladesExtra=0,vacUsades=0,persUsades=0,blausUsades=0,gnpUsades=0,gnitUsades=0,extresUsades=0,acumUsades=0,diesTreball=0;
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
@@ -698,6 +713,8 @@ function calcularResum(){
       }
     } else if(r.tipus==="vacances"){
       vacUsades+=parseFloat(r.horesConcepte)||0;
+    } else if(r.tipus==="dies_blaus"){
+      blausUsades+=parseFloat(r.horesConcepte)||0;
     } else if(r.tipus==="assumptes"){
       const h=parseFloat(r.horesConcepte)||0;
       persUsades+=h;
@@ -717,6 +734,7 @@ function calcularResum(){
     treballades:+planificades.toFixed(2), restants:+(estat.horesAnuals-planificades).toFixed(2),
     acumulades:+((estat.acumTotals||0)+acumuladesExtra-acumUsades).toFixed(2), acumExtra:+acumuladesExtra.toFixed(2), acumUsades:+acumUsades.toFixed(2), extresUsades:+extresUsades.toFixed(2), percent:estat.horesAnuals>0?Math.round(planificades/estat.horesAnuals*100):0,
     vacUsades:+vacUsades.toFixed(2), vacRestants:+(estat.vacancesTotals-vacUsades).toFixed(2),
+    blausUsades:+blausUsades.toFixed(2), blausRestants:+((estat.blausTotals||0)-blausUsades).toFixed(2),
     persUsades:+persUsades.toFixed(2), persRestants:+(estat.assumptesTotals-persUsades).toFixed(2),
     gnpUsades:+gnpUsades.toFixed(2), gnpRestants:+(estat.gnpTotals-gnpUsades).toFixed(2),
     gnitUsades:+gnitUsades.toFixed(2), gnitRestants:+(estat.gnitTotals-gnitUsades).toFixed(2), diesTreball
@@ -735,6 +753,10 @@ function actualitzarVistaAnual(){
   document.getElementById("stat-pers-rest").textContent=r.persRestants;
   document.getElementById("stat-vac-usades").textContent=r.vacUsades;
   document.getElementById("stat-pers-usades").textContent=r.persUsades;
+  const elBR=document.getElementById("stat-blaus-rest");
+  if(elBR) elBR.textContent=r.blausRestants;
+  const elBU=document.getElementById("stat-blaus-usades");
+  if(elBU) elBU.textContent=r.blausUsades;
   document.getElementById("stat-gnp-rest").textContent=r.gnpRestants;
   document.getElementById("stat-gnit-rest").textContent=r.gnitRestants;
   document.getElementById("stat-gnp-usades").textContent=r.gnpUsades;
@@ -789,7 +811,7 @@ function renderCalendariAnual(){
       if(seleccionats.has(clau)) cls+=" selected";
       let ab="";
       if(rg?.tipus==="treball"){ const tn=getTorn(rg.torn); ab=tn?tn.abbr:""; if(tn){ cls+=" t-"+tn.id; if(tn.id==="festa") cls+=" t-festa"; } }
-      else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","baixa":"Bxa","guardia_np":"GNP","hores_acum":"HA","hores_extres":"HE","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
+      else if(rg?.tipus){ ab={"vacances":"Vac","assumptes":"AP","dies_blaus":"DB","baixa":"Bxa","guardia_np":"GNP","hores_acum":"HA","hores_extres":"HE","altres":"Alt"}[rg.tipus]||""; cls+=" t-"+rg.tipus; }
       if(hasJud && !ab) ab="J";
       else if(hasJud && ab) ab=ab+"/J";
       let st="";
@@ -970,7 +992,7 @@ function tancarModal(){ document.getElementById("modal").classList.remove("open"
 function canviarTipus(forceDefaults){
   const tipus=document.getElementById("edit-tipus").value;
   document.getElementById("bloc-treball").style.display=tipus==="treball"?"block":"none";
-  document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","baixa","guardia_np","hores_acum","hores_extres","altres"].includes(tipus)?"block":"none";
+  document.getElementById("bloc-hores-concepte").style.display=["vacances","assumptes","dies_blaus","baixa","guardia_np","hores_acum","hores_extres","altres"].includes(tipus)?"block":"none";
   if(tipus==="treball" && forceDefaults){
     const torn=getTorn(document.getElementById("edit-torn").value);
     if(torn){
@@ -1155,6 +1177,7 @@ function carregarConfigUI(){
   document.getElementById("cfg-hores-anuals").value=estat.horesAnuals;
   document.getElementById("cfg-vacances").value=estat.vacancesTotals;
   document.getElementById("cfg-assumptes").value=estat.assumptesTotals;
+  const elB=document.getElementById("cfg-blaus"); if(elB) elB.value=estat.blausTotals||0;
   document.getElementById("cfg-gnp").value=estat.gnpTotals;
   document.getElementById("cfg-gnit").value=estat.gnitTotals;
   document.getElementById("cfg-acum").value=estat.acumTotals||0;
@@ -1168,6 +1191,7 @@ function guardarConfig(){
   estat.horesAnuals=parseFloat(document.getElementById("cfg-hores-anuals").value)||1580;
   estat.vacancesTotals=parseFloat(document.getElementById("cfg-vacances").value)||200;
   estat.assumptesTotals=parseFloat(document.getElementById("cfg-assumptes").value)||68;
+  estat.blausTotals=parseFloat(document.getElementById("cfg-blaus")?.value)||0;
   estat.gnpTotals=parseFloat(document.getElementById("cfg-gnp").value)||0;
   estat.gnitTotals=parseFloat(document.getElementById("cfg-gnit").value)||0;
   estat.acumTotals=parseFloat(document.getElementById("cfg-acum").value)||0;
@@ -1190,6 +1214,7 @@ function mostrarDiesTipus(tipus){
   const titols = {
     vacances:"Vacances realitzades",
     assumptes:"Assumptes personals realitzats",
+    dies_blaus:"Dies Blaus usats",
     hores_acum:"Hores acumulades usades",
     hores_extres:"Hores extres realitzades",
     guardia_np:"GNP realitzades",
