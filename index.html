@@ -9,9 +9,6 @@
   <meta name="description" content="Registre horari personal">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <title>Registre Horari</title>
   <style>
     :root {
@@ -194,8 +191,8 @@
         <div class="stat green" style="cursor:pointer" onclick="mostrarDiesTipus('vacances')"><div class="value" id="stat-vac-usades">0</div><div class="label">Vacances realitzades ▸</div></div>
         <div class="stat blue"><div class="value" id="stat-pers-rest">68</div><div class="label">Assumptes personals</div></div>
         <div class="stat cyan" style="cursor:pointer" onclick="mostrarDiesTipus('assumptes')"><div class="value" id="stat-pers-usades">0</div><div class="label">Assumptes realitzats ▸</div></div>
-        <div class="stat" style="background:#ecfdf5;border-color:#a7f3d0"><div class="value" id="stat-blaus-rest" style="color:#059669">0</div><div class="label">Dies Blaus restants</div></div>
-        <div class="stat" style="cursor:pointer;background:#f0fdf4;border-color:#bbf7d0" onclick="mostrarDiesTipus('dies_blaus')"><div class="value" id="stat-blaus-usades" style="color:#16a34a">0</div><div class="label">Dies Blaus usats ▸</div></div>
+        <div class="stat green"><div class="value" id="stat-blaus-rest">0</div><div class="label">Dies Blaus restants</div></div>
+        <div class="stat green" style="cursor:pointer" onclick="mostrarDiesTipus('dies_blaus')"><div class="value" id="stat-blaus-usades">0</div><div class="label">Dies Blaus usats ▸</div></div>
         <div class="stat orange"><div class="value" id="stat-acumulades">0</div><div class="label">Hores acumulades</div></div>
         <div class="stat red" style="cursor:pointer" onclick="mostrarDiesTipus('hores_acum')"><div class="value" id="stat-acum-usades">0</div><div class="label">Acumulades usades ▸</div></div>
       </div>
@@ -607,21 +604,19 @@ function carregar() {
       if (estat.acumTotals === undefined) estat.acumTotals = 0;
       if (estat.blausTotals === undefined) estat.blausTotals = 0;
       if (!estat.historic) estat.historic = {};
-      // Migració matins: 7.5h del torn → 8h (defecte real)
-      let migrat=false;
+      // Migració matins: qualsevol matí ≤7.5h → 8h
       for(const clau in (estat.registres||{})){
         const r=estat.registres[clau];
-        if(r?.tipus==="treball" && r.torn){
+        if(r?.tipus==="treball"){
           const t=(estat.torns||[]).find(x=>x.id===r.torn);
           const nom=(t?.nom||"").toLowerCase();
           const esMati=r.torn==="mati" || (t&&(t.id==="mati"||nom.includes("matí")||nom.includes("mati")));
-          const hp=t?t.hores:7.5;
-          if(esMati && Math.abs((parseFloat(r.hores)||0)-hp)<0.01){
-            r.hores=8; migrat=true;
+          if(esMati){
+            const hr=parseFloat(r.hores);
+            if(isNaN(hr) || hr<=7.5) r.hores=8;
           }
         }
       }
-      if(migrat){ /* es desarà al final si cal */ }
       // Migració: desa l'any actual a l'històric si no hi és
       if (!estat.historic[String(estat.anyInici)]) {
         estat.historic[String(estat.anyInici)] = {
@@ -692,21 +687,27 @@ function calcularResum(){
   for(const clau in estat.registres){
     const r=estat.registres[clau]; if(!r?.tipus) continue;
     if(r.tipus==="treball"){
-      const torn=getTorn(r.torn); const hp=torn?torn.hores:0;
-      let hr=parseFloat(r.hores)||0;
+      const torn=getTorn(r.torn);
       const nom=(torn?.nom||"").toLowerCase();
-      const id=torn?.id||"";
+      const id=(torn?.id || r.torn || "").toString();
       const esMati = id==="mati" || nom.includes("matí") || nom.includes("mati");
       const esFesta = id==="festa" || (nom.includes("festa") && !nom.includes("festiu"));
-      // Matí ja planificat amb 7.5 (hores del torn): compta com a 8h per defecte
-      if(esMati && hp>0 && Math.abs(hr-hp)<0.01) hr=8;
+      // Hores del torn de referència (per calcular excés)
+      // Matí: base sempre 7.5; per defecte es treballen 8h → +0.5 acumulades
+      let hp = torn ? parseFloat(torn.hores)||0 : 0;
+      if(esMati) hp = 7.5;
+      let hr = parseFloat(r.hores);
+      if(isNaN(hr) || hr===0) hr = esMati ? 8 : (hp||0);
+      // Matí planificat amb 7.5 → tractar com a 8h
+      if(esMati && hr<=7.5) hr = 8;
       if(esFesta){
         planificades-=hr;
         diesTreball++;
       } else {
         planificades+=hr;
         diesTreball++;
-        if(hr>hp) acumuladesExtra+=(hr-hp);
+        // Excés sobre la base del torn → bossa d'acumulades
+        if(hr>hp) acumuladesExtra += (hr-hp);
         if(id==="nit" || id==="cs_nit" || id==="fn" || nom.includes("nit")){
           gnitUsades+=hr;
         }
