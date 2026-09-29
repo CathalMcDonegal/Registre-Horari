@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="theme-color" content="#f1f5f9">
-  <meta name="description" content="Registre horari personal">
+  <meta name="apple-mobile-web-app-title" content="Registre Horari">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="Registre horari personal dels Mossos d'Esquadra">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <title>Registre Horari</title>
   <style>
     :root {
@@ -161,9 +165,44 @@
     .tag-no { background: #fee2e2; color: #991b1b; }
     .tag-pay { background: #fef3c7; color: #92400e; }
     .tag-shift { background: #dbeafe; color: #1e40af; }
+
+    /* Banner d'instal·lació PWA */
+    .install-banner {
+      display: none; position: sticky; top: 0; z-index: 150;
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+      color: #fff; padding: 12px 14px; gap: 12px;
+      align-items: center; box-shadow: 0 2px 10px rgba(37,99,235,0.35);
+    }
+    .install-banner.show { display: flex; }
+    .install-banner .ib-icon {
+      width: 44px; height: 44px; border-radius: 10px; background: #fff;
+      flex-shrink: 0; object-fit: cover; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+    .install-banner .ib-text { flex: 1; min-width: 0; }
+    .install-banner .ib-text strong { display: block; font-size: 0.92rem; font-weight: 700; }
+    .install-banner .ib-text span { font-size: 0.72rem; opacity: 0.9; }
+    .install-banner .ib-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .install-banner .ib-btn {
+      border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .install-banner .ib-btn-install { background: #fff; color: #1e40af; }
+    .install-banner .ib-btn-later { background: rgba(255,255,255,0.18); color: #fff; }
+    .install-banner.ios-hint .ib-btn-install { display: none; }
   </style>
 </head>
 <body>
+  <div id="install-banner" class="install-banner" role="dialog" aria-label="Instal·lar aplicació">
+    <img class="ib-icon" src="icon-192.png" alt="">
+    <div class="ib-text">
+      <strong>Instal·la Registre Horari</strong>
+      <span id="install-hint">Afegeix-la a la pantalla d'inici per un accés ràpid</span>
+    </div>
+    <div class="ib-actions">
+      <button type="button" class="ib-btn ib-btn-later" onclick="dismissInstall()">Ara no</button>
+      <button type="button" class="ib-btn ib-btn-install" id="btn-install" onclick="installarApp()">Instal·lar</button>
+    </div>
+  </div>
   <div class="header">
     <div>
       <h1 id="app-titol">Registre Horari</h1>
@@ -313,6 +352,13 @@
       <div class="card-title">Torns predefinits (modificables)</div>
       <div id="cfg-torns"></div>
       <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="afegirTorn()">+ Afegir torn</button>
+    </div>
+    <div class="card" id="card-install">
+      <div class="card-title">Instal·lar com a aplicació</div>
+      <p class="hint" style="margin-bottom:12px" id="install-status">Pots instal·lar aquesta app a la pantalla d'inici del mòbil o de l'ordinador. Les teves dades es conserven sempre al dispositiu.</p>
+      <button class="btn btn-primary" id="btn-install-cfg" onclick="installarApp()" style="display:none">Instal·lar aplicació</button>
+      <button class="btn btn-secondary" id="btn-install-ios" onclick="mostrarAjudaIOS()" style="display:none">Com instal·lar a l'iPhone</button>
+      <div id="install-done" style="display:none;font-size:0.9rem;color:var(--green);font-weight:600">✓ Aplicació instal·lada</div>
     </div>
     <div class="card">
       <div class="card-title">Dades</div>
@@ -1279,6 +1325,126 @@ function mostrarVista(nom){
 document.getElementById("j-cobrament").addEventListener("change", function(){
   if(this.checked) soCaixa();
 });
+
+/* ========== Instal·lació PWA (no toca les dades de localStorage) ========== */
+let deferredPrompt = null;
+const INSTALL_DISMISS_KEY = "registreHorari_installDismiss";
+
+function isStandalone() {
+  return window.matchMedia("(display-mode: standalone)").matches
+    || window.navigator.standalone === true
+    || document.referrer.includes("android-app://");
+}
+
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function wasDismissedRecently() {
+  try {
+    const t = localStorage.getItem(INSTALL_DISMISS_KEY);
+    if (!t) return false;
+    // No mostrar de nou durant 14 dies
+    return (Date.now() - parseInt(t, 10)) < 14 * 24 * 60 * 60 * 1000;
+  } catch (e) { return false; }
+}
+
+function showInstallBanner(mode) {
+  const banner = document.getElementById("install-banner");
+  if (!banner || isStandalone() || wasDismissedRecently()) return;
+  banner.classList.add("show");
+  if (mode === "ios") {
+    banner.classList.add("ios-hint");
+    document.getElementById("install-hint").textContent =
+      "Toca Compartir ↪ i després «Afegeix a la pantalla d'inici»";
+  }
+}
+
+function dismissInstall() {
+  const banner = document.getElementById("install-banner");
+  if (banner) banner.classList.remove("show");
+  try { localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now())); } catch (e) {}
+}
+
+async function installarApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    if (outcome === "accepted") {
+      dismissInstall();
+      actualitzarUIInstall();
+    }
+  } else if (isIOS()) {
+    mostrarAjudaIOS();
+  } else {
+    alert("Obre el menú del navegador (⋮ o ⋯) i tria «Instal·lar aplicació» o «Afegeix a la pantalla d'inici».");
+  }
+}
+
+function mostrarAjudaIOS() {
+  alert(
+    "Per instal·lar a l'iPhone / iPad:\n\n" +
+    "1. Toca el botó Compartir (quadrat amb fletxa ↑) a Safari\n" +
+    "2. Desplaça't i toca «Afegeix a la pantalla d'inici»\n" +
+    "3. Confirma amb «Afegeix»\n\n" +
+    "Les teves dades es conserven intactes."
+  );
+}
+
+function actualitzarUIInstall() {
+  const btnCfg = document.getElementById("btn-install-cfg");
+  const btnIos = document.getElementById("btn-install-ios");
+  const done = document.getElementById("install-done");
+  const status = document.getElementById("install-status");
+  if (!btnCfg) return;
+  if (isStandalone()) {
+    btnCfg.style.display = "none";
+    if (btnIos) btnIos.style.display = "none";
+    if (done) done.style.display = "block";
+    if (status) status.textContent = "L'aplicació ja està instal·lada al dispositiu.";
+    const banner = document.getElementById("install-banner");
+    if (banner) banner.classList.remove("show");
+  } else if (isIOS()) {
+    btnCfg.style.display = "none";
+    if (btnIos) btnIos.style.display = "block";
+  } else if (deferredPrompt) {
+    btnCfg.style.display = "block";
+  } else {
+    btnCfg.style.display = "block";
+    btnCfg.textContent = "Com instal·lar";
+  }
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner("android");
+  actualitzarUIInstall();
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredPrompt = null;
+  dismissInstall();
+  actualitzarUIInstall();
+});
+
+// Registrar Service Worker (només cache d'assets; no afecta localStorage)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+
+// Mostrar banner a iOS després d'un moment (Safari no dispara beforeinstallprompt)
+setTimeout(() => {
+  if (isIOS() && !isStandalone() && !wasDismissedRecently()) {
+    showInstallBanner("ios");
+  }
+  actualitzarUIInstall();
+}, 1800);
+
 carregar(); actualitzarVistaAnual(); renderMes();
 </script>
 </body>
