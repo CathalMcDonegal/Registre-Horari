@@ -311,8 +311,26 @@ function renderCalendar(){
  for(let n=1;n<=days;n++){const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r?.tipus==="treball"?getShift(r.torn):null;let cls="day "+(isWeekend(d)?"weekend ":"")+(holiday(d)?" holiday ":"")+(selected.has(k)?" selected ":"");if(r)cls+=r.tipus==="treball"?` ${s?.id==="mati"?"mati":s?.id==="tarda"?"tarda":s?.id==="nit"?"nit":s?.id||"work"}`:` ${r.tipus}`;const label=r?(r.tipus==="treball"?s?.abbr||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"";const hours=r?(r.tipus==="treball"?plainHours(r.hores||0):plainHours(r.horesConcepte||0)):"";html+=`<button class="${cls}" onclick="clickDay('${k}')"><span class="num">${n}</span><span class="kind">${escapeHtml(label)}</span><span class="hrs">${hours}</span></button>`}
  cal.innerHTML=html;document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>`<span class="chip">${x==="mati"?"Matí":x==="tarda"?"Tarda":x==="nit"?"Nit":TYPE_NAMES[x]}</span>`).join("");
 }
+function toggleCalendarMode(){
+ const list=document.getElementById("monthlyList"),grid=document.getElementById("calendar"),btn=document.getElementById("calendarModeBtn");
+ const monthly=list.style.display==="none";
+ list.style.display=monthly?"flex":"none";grid.style.display=monthly?"none":"grid";
+ btn.textContent=monthly?"Vista calendari":"Vista mensual";
+ if(monthly)renderMonthly();
+}
+function renderMonthly(){
+ const y=currentMonth.getFullYear(),m=currentMonth.getMonth(),days=new Date(y,m+1,0).getDate(),list=document.getElementById("monthlyList"),rows=[];
+ for(let n=1;n<=days;n++){
+  const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r&&r.tipus==="treball"?getShift(r.torn):null,jud=state.judicis.filter(j=>j.data===k);
+  let title="Sense registrar",detail="",hours="";
+  if(r){title=r.tipus==="treball"?((s&&s.nom)||"Treball"):(TYPE_NAMES[r.tipus]||r.tipus);detail=r.tipus==="treball"?(((s&&s.inici)||r.entrada||"")+" → "+((s&&s.fi)||r.sortida||"")):(r.notes||"");hours=plainHours(r.tipus==="treball"?r.hores||0:r.horesConcepte||0)+" h"}
+  else if(holiday(d))title=state.festius[k];
+  if(jud.length)detail+=(detail?" · ":"")+"⚖️ "+jud.map(j=>(j.hora||"")+" "+(j.jutjat||"")).join(" · ");
+  rows.push('<div class="monthly-row" onclick="openDay(\''+k+'\')"><div class="monthly-date"><b>'+n+'</b><small>'+DOW[d.getDay()]+'</small></div><div class="monthly-info"><strong>'+escapeHtml(title)+'</strong><small>'+escapeHtml(detail||"Toca per registrar")+'</small></div><div class="monthly-hours">'+hours+'</div></div>');
+ }
+ list.innerHTML=rows.join("");
+}
 function clickDay(k){if(multi){selected.has(k)?selected.delete(k):selected.add(k);renderCalendar()}else openDay(k)}
-
 function renderWeek(){
  const start=weekAnchor;document.getElementById("weekTitle").textContent=`${start.getDate()} ${MONTHS[start.getMonth()]} – ${new Date(start.getTime()+6*86400000).getDate()} ${MONTHS[new Date(start.getTime()+6*86400000).getMonth()]}`;
  let total=0;const rows=[];for(let i=0;i<7;i++){const d=new Date(start);d.setDate(start.getDate()+i);const r=state.registres[key(d)],s=r?.tipus==="treball"?getShift(r.torn):null;const h=r?(r.tipus==="treball"?Number(r.hores)||0:Number(r.horesConcepte)||0):0;total+=r?.tipus==="treball"&&s?.id==="festa"?-h:h;rows.push(`<div class="week-row" onclick="openDay('${key(d)}')"><div class="week-date"><b>${d.getDate()}</b><small>${DOW[d.getDay()]}</small></div><div><strong>${escapeHtml(r?(r.tipus==="treball"?s?.nom||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"Sense registre")}</strong><small>${r?(r.tipus==="treball"?`${r.entrada||s?.inici||""} → ${r.sortida||s?.fi||""}`:""):"Toca per registrar"}</small></div><div class="week-sum">${r?plainHours(h)+" h":"—"}</div></div>`)}
