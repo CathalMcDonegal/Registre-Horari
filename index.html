@@ -30,7 +30,7 @@ main{width:100%;max-width:1440px;margin:0 auto;padding:clamp(10px,1.5vw,20px)}.v
 .modal-bg{position:fixed;inset:0;background:rgba(2,6,23,.48);z-index:100;display:none;align-items:flex-end}.modal-bg.open{display:flex}.modal{width:100%;max-width:620px;margin:auto auto 0;background:var(--card);border-radius:20px 20px 0 0;max-height:92dvh;overflow:auto;padding:17px 15px calc(18px + var(--safe))}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.modal-head h2{margin:0;font-size:1.05rem}.close{border:0;background:#eef2f7;border-radius:50%;width:32px;height:32px;font-size:1.2rem}.form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}.form-actions .primary{grid-column:1/-1}
 .empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:.82rem}.hint{font-size:.7rem;color:var(--muted);margin:-4px 0 10px}.setting-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;background:#f7faff}.setting-row:last-child{border-bottom:0}.setting-row small{color:var(--muted);display:block}.toast{position:fixed;left:50%;bottom:calc(88px + var(--safe));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:200;background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;font-size:.78rem;font-weight:700;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}.modal-bg{align-items:center}.modal{border-radius:20px;margin:auto}.fab{right:24px}}
-@media(max-width:600px){.monthly-summary>div{padding:8px}.monthly-summary strong{font-size:.9rem}.monthly-summary span{font-size:.58rem}main{padding:9px}.calendar{display:none}.monthly-list{display:flex!important}.calendarModeBtn{display:none}.hero h2{font-size:1.8rem}.month-head{margin-bottom:12px}.month-head h2{font-size:1.08rem}}@media(max-width:390px){.monthly-row{grid-template-columns:42px minmax(0,1fr) auto;padding:10px 9px}.monthly-date b{font-size:1.05rem}.monthly-info strong{font-size:.76rem}.monthly-info small{font-size:.6rem}.hero h2{font-size:1.65rem}}
+@media(max-width:600px){.monthly-summary>div{padding:8px}.monthly-summary strong{font-size:.9rem}.monthly-summary span{font-size:.58rem}main{padding:9px}.calendar{display:none}.monthly-list{display:flex!important}#calendarModeBtn{display:none}.hero h2{font-size:1.8rem}.month-head{margin-bottom:12px}.month-head h2{font-size:1.08rem}}@media(max-width:390px){.monthly-row{grid-template-columns:42px minmax(0,1fr) auto;padding:10px 9px}.monthly-date b{font-size:1.05rem}.monthly-info strong{font-size:.76rem}.monthly-info small{font-size:.6rem}.hero h2{font-size:1.65rem}}
 @media(prefers-color-scheme:dark){
 :root{--bg:#0b1220;--card:#111b2d;--text:#e5edf8;--muted:#94a3b8;--line:#26364e;--shadow:0 8px 25px rgba(0,0,0,.18)}.appbar,.nav{background:rgba(17,27,45,.95)}.year-pill{background:#172554;border-color:#1e40af}.stat,.day,.row,input,select,textarea{background:#0f192a}.day.weekend{background:#0e1725}.day.work{background:#172554}.day.mati{background:#3f3b0b}.day.tarda{background:#43220d}.day.nit,.day.cs_nit,.day.fn{background:#102c55}.day.vacances,.day.assumptes,.day.dies_blaus,.day.festa{background:#0b3320}.day.baixa{background:#42171a}.day.judici{background:#2e1649}.btn.secondary{background:#1a2639;color:var(--text)}.hero{background:linear-gradient(135deg,#020617,#172554)}}
 /* Poliment visual final */
@@ -209,27 +209,41 @@ function migrate(raw){
   return out;
 }
 function recoverLocalData(){
-  let best=null,bestScore=0;
+  const candidates=[];
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
-    if(!k||k===KEY||k.startsWith(KEY+".backup-"))continue;
+    if(!k||k===KEY)continue;
+    if(!k.startsWith(KEY))continue;
     try{
       const raw=JSON.parse(localStorage.getItem(k));
       if(!raw||typeof raw!=="object")continue;
       const score=(raw.registres&&typeof raw.registres==="object"?Object.keys(raw.registres).length:0)+(Array.isArray(raw.judicis)?raw.judicis.length:0)+(raw.historic&&typeof raw.historic==="object"?Object.keys(raw.historic).length*2:0);
-      if(score>bestScore){bestScore=score;best={data:raw}}
+      if(score>0)candidates.push({data:raw,score});
     }catch(e){}
   }
-  if(!best||bestScore===0)return false;
-  const current=migrate(state),legacy=migrate(best.data);
-  const currentCount=Object.keys(current.registres||{}).length+(current.judicis||[]).length;
-  if(currentCount>0)return false;
-  current.registres={...(legacy.registres||{})};
-  current.judicis=[...(legacy.judicis||[])];
-  current.historic={...(legacy.historic||{})};
-  state=current;
-  localStorage.setItem(KEY,JSON.stringify(state));
-  return true;
+  if(!candidates.length)return false;
+  candidates.sort((a,b)=>b.score-a.score);
+  const before=JSON.stringify(state);
+  let changed=false;
+  for(const candidate of candidates.slice(0,8)){
+    const legacy=migrate(candidate.data);
+    for(const [k,r] of Object.entries(legacy.registres||{})){
+      if(!state.registres[k]){state.registres[k]=clone(r);changed=true}
+    }
+    const existingJud=new Set((state.judicis||[]).map(j=>JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment])));
+    for(const j of legacy.judicis||[]){
+      const sig=JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment]);
+      if(!existingJud.has(sig)){state.judicis.push(clone(j));existingJud.add(sig);changed=true}
+    }
+    if(legacy.historic&&typeof legacy.historic==="object"){
+      state.historic=state.historic||{};
+      for(const [year,snap] of Object.entries(legacy.historic)){
+        if(!state.historic[year]){state.historic[year]=clone(snap);changed=true}
+      }
+    }
+  }
+  if(changed)localStorage.setItem(KEY,JSON.stringify(state));
+  return changed && JSON.stringify(state)!==before;
 }
 function load(){
   let recovered=false;
