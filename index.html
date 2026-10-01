@@ -205,6 +205,15 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 .calendar .day.baixa{background:#7f1d1d;border-color:#f87171}.calendar .day.baixa .num,.calendar .day.baixa .kind,.calendar .day.baixa .hrs{color:#fee2e2}
 .calendar .day.judici{background:#581c87;border-color:#c084fc}.calendar .day.judici .num,.calendar .day.judici .kind,.calendar .day.judici .hrs{color:#f3e8ff}
 }
+
+/* Llegenda del calendari: sempre visible i amb contrast */
+#view-calendar .section.card{position:relative;z-index:3;overflow:visible;background:var(--card);margin-top:14px}
+#view-calendar #legend{display:flex;flex-wrap:wrap;gap:8px;min-height:34px;align-items:center}
+#view-calendar #legend .legend-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#172033;font-size:.68rem;font-weight:850;white-space:nowrap}
+#view-calendar #legend .legend-chip::before{content:"";width:10px;height:10px;border-radius:50%;background:#94a3b8;flex:0 0 10px}
+#view-calendar #legend .legend-mati::before{background:#38bdf8}.#view-calendar #legend .legend-tarda::before{background:#f59e0b}.#view-calendar #legend .legend-nit::before{background:#312e81}.#view-calendar #legend .legend-vacances::before{background:#22c55e}.#view-calendar #legend .legend-assumptes::before{background:#16a34a}.#view-calendar #legend .legend-baixa::before{background:#ef4444}
+@media(prefers-color-scheme:dark){#view-calendar #legend .legend-chip{background:#182438;border-color:#3a4b63;color:#eef4ff}}
+@media(max-width:600px){#view-calendar .section.card{margin-top:10px;padding:12px}#view-calendar #legend{gap:6px}#view-calendar #legend .legend-chip{padding:6px 8px;font-size:.62rem}}
 /* Instal·lació i marca d'aigua */
 .install-banner{position:fixed;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);z-index:55;width:min(520px,calc(100% - 24px));display:none;align-items:center;gap:10px;padding:10px 12px;border:1px solid #93c5fd;border-radius:14px;background:rgba(239,246,255,.97);box-shadow:0 10px 28px rgba(15,23,42,.16);color:#17325c}
 .install-banner.show{display:flex}.install-banner .grow{flex:1;min-width:0}.install-banner strong{display:block;font-size:.78rem}.install-banner small{display:block;font-size:.64rem;color:#526783;margin-top:1px}.install-banner .btn{flex-shrink:0}
@@ -484,7 +493,7 @@ function renderCalendar(){
  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
  for(let i=0;i<offset;i++)html+=`<div></div>`;
  for(let n=1;n<=days;n++){const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r?.tipus==="treball"?getShift(r.torn):null;let cls="day "+(isWeekend(d)?"weekend ":"")+(holiday(d)?" holiday ":"")+(selected.has(k)?" selected ":"");if(r)cls+=r.tipus==="treball"?` ${s?.id==="mati"?"mati":s?.id==="tarda"?"tarda":s?.id==="nit"?"nit":s?.id||"work"}`:` ${r.tipus}`;const label=r?(r.tipus==="treball"?s?.abbr||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"";const hours=r?(r.tipus==="treball"?plainHours(r.hores||0):plainHours(r.horesConcepte||0)):"";html+=`<button class="${cls}" onclick="clickDay('${k}')"><span class="num">${n}</span><span class="kind">${escapeHtml(label)}</span><span class="hrs">${hours}</span></button>`}
- cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>`<span class="chip">${x==="mati"?"Matí":x==="tarda"?"Tarda":x==="nit"?"Nit":TYPE_NAMES[x]}</span>`).join("");
+ cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>{const names={mati:"Matí",tarda:"Tarda",nit:"Nit",vacances:"Vacances",assumptes:"Assumptes propis",baixa:"Baixa"};return `<span class="legend-chip legend-${x}">${names[x]}</span>`}).join("");
 }
 function toggleCalendarMode(){
  const list=document.getElementById("monthlyList"),grid=document.getElementById("calendar"),btn=document.getElementById("calendarModeBtn");
