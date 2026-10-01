@@ -110,6 +110,74 @@ body{overflow-x:hidden}.view,.section,.card{min-width:0}@media(min-width:900px){
   border:1px solid var(--line);
 }
 
+/* Sistema visual unificat 2.1 */
+:root{
+ --bg:#f4f7fb;--card:#ffffff;--text:#172033;--muted:#64748b;--line:#d9e2ef;
+ --primary:#2563eb;--primary2:#1d4ed8;--primary-soft:#eaf2ff;
+ --shadow:0 4px 18px rgba(15,23,42,.055);--shadow-hover:0 8px 24px rgba(37,99,235,.10);
+ --r:16px;
+}
+body{background:var(--bg);color:var(--text)}
+main{padding-top:clamp(12px,1.8vw,22px)}
+.appbar{background:rgba(255,255,255,.92);box-shadow:0 1px 12px rgba(15,23,42,.06)}
+.card{border-color:var(--line);box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.card:hover{box-shadow:var(--shadow-hover)}
+.card-title{color:#526783;margin-bottom:13px}
+.nav{background:rgba(255,255,255,.96);box-shadow:0 -2px 14px rgba(15,23,42,.06);border-top-color:var(--line)}
+.nav button{color:#718096;padding:6px 4px;border-radius:12px}
+.nav button.active{color:var(--primary);background:var(--primary-soft)}
+.btn{transition:transform .12s,box-shadow .12s,background .12s}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(15,23,42,.08)}
+.btn:active{transform:translateY(0)}
+.btn.secondary{background:#f5f8fc;color:#29415f;border-color:#d5e1ef}
+.toolbar{padding:0;margin-bottom:14px}
+.toolbar .btn{background:#fff}
+.search,input,select,textarea{border-color:#d4dfec;background:#fff;transition:border-color .15s,box-shadow .15s}
+.search:focus,input:focus,select:focus,textarea:focus{border-color:#7aa7f8;box-shadow:0 0 0 3px rgba(37,99,235,.10);outline:0}
+.year-pill{background:#f3f7ff;border-color:#d5e3f8}
+.year-pill button:hover{background:#e7f0ff}
+.today{min-height:58px}
+.stats .stat{background:#f8fafd;border-color:#e0e7f0}
+.month-head button{background:#fff}
+.calendar{gap:7px}
+.day{border-radius:12px;padding:9px;background:#fff;box-shadow:inset 0 0 0 0 transparent}
+.day:hover{box-shadow:0 5px 14px rgba(15,23,42,.08)}
+.day.weekend{background:#f8fafc}
+.day .num{font-size:clamp(.78rem,1vw,.92rem)}
+.day .kind{margin-top:6px}
+.monthly-row,.week-row,.row{background:#fff;border-color:#dce4ee}
+.monthly-row:hover,.week-row:hover{border-color:#9bbcf0;box-shadow:var(--shadow-hover)}
+.monthly-row.is-today{background:#f5f9ff;border-color:#60a5fa}
+.setting-row{background:#f9fbfd;border-color:#dde6f0}
+.chip{border:1px solid transparent}
+.modal{box-shadow:0 16px 45px rgba(2,6,23,.18)}
+.close{background:#f1f5f9;color:#334155}
+.empty{background:#f8fafc;border-radius:12px}
+.hint{line-height:1.45}
+#legend{gap:6px}
+#legend .chip{background:#f5f8fc}
+.hero{box-shadow:0 8px 24px rgba(15,23,42,.14)}
+@media(max-width:600px){
+ main{padding:10px}
+ .card{border-radius:14px;padding:13px}
+ .toolbar{gap:6px}
+ .toolbar .btn{padding:8px 10px}
+ .day{border-radius:10px;padding:7px}
+ .monthly-summary>div{background:#f8fafd;border-color:#dde6f0}
+}
+@media(prefers-color-scheme:dark){
+ :root{--bg:#0b1220;--card:#111b2d;--text:#e8eef7;--muted:#9aa9bd;--line:#293a52;--primary-soft:#172554;--shadow:0 6px 22px rgba(0,0,0,.18)}
+ .appbar,.nav{background:rgba(17,27,45,.96)}
+ .toolbar .btn,.month-head button,.monthly-row,.week-row,.row,.card,.setting-row{background:#111b2d}
+ .stats .stat,.empty{background:#0f192a}
+ .search,input,select,textarea{background:#0f192a;border-color:#33465f;color:var(--text)}
+ .btn.secondary{background:#1a2639;color:var(--text);border-color:#344963}
+ .year-pill{background:#172554;border-color:#31518a}
+ .nav button{color:#91a0b5}
+ .nav button.active{background:#172554;color:#8db7ff}
+ .monthly-row.is-today{background:#102447}
+}
+
 </style>
 </head>
 <body>
