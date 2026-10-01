@@ -208,10 +208,39 @@ function migrate(raw){
   Object.values(out.registres).forEach(r=>{if(r?.tipus==="treball"&&isMorning(out.torns.find(t=>t.id===r.torn))&&(Number(r.hores)||0)<=7.5)r.hores=8});
   return out;
 }
+function recoverLocalData(){
+  let best=null,bestScore=0;
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k||k===KEY||k.startsWith(KEY+".backup-"))continue;
+    try{
+      const raw=JSON.parse(localStorage.getItem(k));
+      if(!raw||typeof raw!=="object")continue;
+      const score=(raw.registres&&typeof raw.registres==="object"?Object.keys(raw.registres).length:0)+(Array.isArray(raw.judicis)?raw.judicis.length:0)+(raw.historic&&typeof raw.historic==="object"?Object.keys(raw.historic).length*2:0);
+      if(score>bestScore){bestScore=score;best={data:raw}}
+    }catch(e){}
+  }
+  if(!best||bestScore===0)return false;
+  const current=migrate(state),legacy=migrate(best.data);
+  const currentCount=Object.keys(current.registres||{}).length+(current.judicis||[]).length;
+  if(currentCount>0)return false;
+  current.registres={...(legacy.registres||{})};
+  current.judicis=[...(legacy.judicis||[])];
+  current.historic={...(legacy.historic||{})};
+  state=current;
+  localStorage.setItem(KEY,JSON.stringify(state));
+  return true;
+}
 function load(){
-  try{const raw=localStorage.getItem(KEY);if(raw)state=migrate(JSON.parse(raw));else state=defaultState()}catch(e){state=defaultState()}
+  let recovered=false;
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw)state=migrate(JSON.parse(raw));else state=defaultState();
+    recovered=recoverLocalData();
+  }catch(e){state=defaultState()}
   const now=new Date(); currentMonth=new Date(now.getFullYear(),now.getMonth(),1); weekAnchor=startOfWeek(now);
   ensureHistory(); renderAll();
+  if(recovered)setTimeout(()=>toast("Dades locals recuperades"),300);
 }
 function snapshot(){return {horesAnuals:state.horesAnuals,vacancesTotals:state.vacancesTotals,assumptesTotals:state.assumptesTotals,blausTotals:state.blausTotals,gnpTotals:state.gnpTotals,gnitTotals:state.gnitTotals,acumTotals:state.acumTotals,festius:clone(state.festius),registres:clone(state.registres),judicis:clone(state.judicis)}}
 function ensureHistory(){state.historic=state.historic||{};state.historic[String(state.anyInici)]=state.historic[String(state.anyInici)]||snapshot()}
