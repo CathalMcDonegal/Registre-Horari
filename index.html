@@ -309,7 +309,7 @@ function renderCalendar(){
  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
  for(let i=0;i<offset;i++)html+=`<div></div>`;
  for(let n=1;n<=days;n++){const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r?.tipus==="treball"?getShift(r.torn):null;let cls="day "+(isWeekend(d)?"weekend ":"")+(holiday(d)?" holiday ":"")+(selected.has(k)?" selected ":"");if(r)cls+=r.tipus==="treball"?` ${s?.id==="mati"?"mati":s?.id==="tarda"?"tarda":s?.id==="nit"?"nit":s?.id||"work"}`:` ${r.tipus}`;const label=r?(r.tipus==="treball"?s?.abbr||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"";const hours=r?(r.tipus==="treball"?plainHours(r.hores||0):plainHours(r.horesConcepte||0)):"";html+=`<button class="${cls}" onclick="clickDay('${k}')"><span class="num">${n}</span><span class="kind">${escapeHtml(label)}</span><span class="hrs">${hours}</span></button>`}
- cal.innerHTML=html;document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>`<span class="chip">${x==="mati"?"Matí":x==="tarda"?"Tarda":x==="nit"?"Nit":TYPE_NAMES[x]}</span>`).join("");
+ cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>`<span class="chip">${x==="mati"?"Matí":x==="tarda"?"Tarda":x==="nit"?"Nit":TYPE_NAMES[x]}</span>`).join("");
 }
 function toggleCalendarMode(){
  const list=document.getElementById("monthlyList"),grid=document.getElementById("calendar"),btn=document.getElementById("calendarModeBtn");
