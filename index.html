@@ -50,6 +50,66 @@ main{width:100%;max-width:1440px;margin:0 auto;padding:clamp(10px,1.5vw,20px)}.v
 @media(min-width:720px){#view-week,#view-stats,#view-more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}#view-week>.toolbar,#view-stats>.card:first-child,#view-more>.card:first-child{grid-column:1/-1}#view-week>.card,#view-stats>.card,#view-more>.card{margin-bottom:0}.week-row{padding:14px}.chart{height:230px}}
 @media(min-width:1200px){#view-week,#view-stats,#view-more{grid-template-columns:repeat(3,minmax(0,1fr))}#view-week>.toolbar,#view-stats>.card:first-child,#view-more>.card:first-child{grid-column:1/-1}.chart{height:250px}}
 body{overflow-x:hidden}.view,.section,.card{min-width:0}@media(min-width:900px){#view-week>.card,#view-stats>.card,#view-more>.card{margin-bottom:16px}#view-week>.card:nth-of-type(2){background:linear-gradient(135deg,#f4f9ff,#ffffff)}#view-stats>.card:first-child{background:linear-gradient(135deg,#f7fbff,#ffffff)}#view-more>.card:first-child{border-top:3px solid #60a5fa}}@media(min-width:1100px){.calendar{gap:8px}.day{min-height:96px}.day .kind{font-size:.76rem}.day .hrs{font-size:.7rem}}
+
+/* Correcció de contrast dels dies i pestanyes */
+.day,
+.day .num,
+.day .kind,
+.day .hrs,
+.monthly-row,
+.monthly-row strong,
+.monthly-row small,
+.week-row,
+.week-row strong,
+.week-row small {
+  color: var(--text);
+}
+.day .hrs,
+.monthly-row small,
+.week-row small {
+  color: var(--muted);
+}
+
+/* Colors suaus i llegibles per cada tipus de jornada */
+.day.work { background:#e8f1ff; border-color:#93c5fd; }
+.day.mati { background:#fff9d6; border-color:#facc15; }
+.day.tarda { background:#ffead8; border-color:#fb923c; }
+.day.nit,.day.cs_nit,.day.fn { background:#dbeafe; border-color:#60a5fa; }
+.day.vacances,.day.assumptes,.day.dies_blaus,.day.festa { background:#dcfce7; border-color:#86efac; }
+.day.baixa { background:#fee2e2; border-color:#fca5a5; }
+.day.judici { background:#f3e8ff; border-color:#c084fc; }
+
+/* El número sempre queda ben visible */
+.day .num {
+  color:#0f172a;
+  font-weight:850;
+  text-shadow:none;
+}
+.day .kind {
+  color:#1e293b;
+  font-weight:750;
+}
+.day .hrs { color:#475569; }
+
+/* En mode fosc mantenim els fons diferenciats però amb text clar */
+@media(prefers-color-scheme:dark){
+  .day.work { background:#172554; border-color:#60a5fa; }
+  .day.mati { background:#3f3b0b; border-color:#eab308; }
+  .day.tarda { background:#43220d; border-color:#f97316; }
+  .day.nit,.day.cs_nit,.day.fn { background:#102c55; border-color:#60a5fa; }
+  .day.vacances,.day.assumptes,.day.dies_blaus,.day.festa { background:#0b3320; border-color:#4ade80; }
+  .day.baixa { background:#42171a; border-color:#f87171; }
+  .day.judici { background:#2e1649; border-color:#c084fc; }
+  .day .num,.day .kind { color:#f8fafc; }
+  .day .hrs { color:#cbd5e1; }
+}
+
+/* Llegenda: el text també ha de tenir contrast */
+#legend .chip {
+  color:var(--text);
+  border:1px solid var(--line);
+}
+
 </style>
 </head>
 <body>
