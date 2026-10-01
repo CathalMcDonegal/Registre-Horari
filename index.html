@@ -9,8 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="Registre Horari">
 <meta name="description" content="Registre horari personal">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.svg">
-<link rel="apple-touch-icon" href="icon-192.svg">
 <title>Registre Horari 2.0</title>
 <style>
 :root{--bg:#eef5ff;--card:#fff;--text:#10203a;--muted:#5b6b82;--line:#cbd9ee;--primary:#2563eb;--primary2:#1d4ed8;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;--cyan:#0891b2;--pink:#db2777;--shadow:0 6px 22px rgba(15,23,42,.06);--safe:env(safe-area-inset-bottom,0px);--r:16px}
@@ -39,7 +37,7 @@ main{width:100%;max-width:1440px;margin:0 auto;padding:clamp(10px,1.5vw,20px)}.v
 #view-calendar .calendar > .day{visibility:visible;display:flex}
 #view-calendar .monthly-list{visibility:visible}
 #view-calendar .month-head{min-height:42px}
-@media(max-width:600px){#view-calendar .calendar{display:grid!important;gap:3px;min-height:0}#view-calendar .dow{padding:3px 1px}#view-calendar .day{display:flex;min-height:70px;padding:6px 4px}#view-calendar .day .kind{font-size:.5rem}#view-calendar .day .hrs{font-size:.48rem}}
+@media(max-width:600px){#view-calendar .calendar{display:grid!important;gap:3px;min-height:0}.#view-calendar .dow{padding:3px 1px}#view-calendar .day{display:flex;min-height:70px;padding:6px 4px}.#view-calendar .day .kind{font-size:.5rem}.#view-calendar .day .hrs{font-size:.48rem}}
 @media(prefers-color-scheme:dark){
 :root{--bg:#0b1220;--card:#111b2d;--text:#e5edf8;--muted:#94a3b8;--line:#26364e;--shadow:0 8px 25px rgba(0,0,0,.18)}.appbar,.nav{background:rgba(17,27,45,.95)}.year-pill{background:#172554;border-color:#1e40af}.stat,.day,.row,input,select,textarea{background:#0f192a}.day.weekend{background:#0e1725}.day.work{background:#172554}.day.mati{background:#3f3b0b}.day.tarda{background:#43220d}.day.nit,.day.cs_nit,.day.fn{background:#102c55}.day.vacances,.day.assumptes,.day.dies_blaus,.day.festa{background:#0b3320}.day.baixa{background:#42171a}.day.judici{background:#2e1649}.btn.secondary{background:#1a2639;color:var(--text)}.hero{background:linear-gradient(135deg,#020617,#172554)}}
 /* Poliment visual final */
@@ -213,7 +211,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 #view-calendar #legend{display:flex;flex-wrap:wrap;gap:8px;min-height:34px;align-items:center}
 #view-calendar #legend .legend-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid #cbd5e1;background:#f8fafc;color:#172033;font-size:.68rem;font-weight:850;white-space:nowrap}
 #view-calendar #legend .legend-chip::before{content:"";width:10px;height:10px;border-radius:50%;background:#94a3b8;flex:0 0 10px}
-#view-calendar #legend .legend-mati::before{background:#38bdf8}#view-calendar #legend .legend-tarda::before{background:#f59e0b}#view-calendar #legend .legend-nit::before{background:#312e81}#view-calendar #legend .legend-vacances::before{background:#22c55e}#view-calendar #legend .legend-assumptes::before{background:#16a34a}#view-calendar #legend .legend-baixa::before{background:#ef4444}
+#view-calendar #legend .legend-mati::before{background:#38bdf8}.#view-calendar #legend .legend-tarda::before{background:#f59e0b}.#view-calendar #legend .legend-nit::before{background:#312e81}.#view-calendar #legend .legend-vacances::before{background:#22c55e}.#view-calendar #legend .legend-assumptes::before{background:#16a34a}.#view-calendar #legend .legend-baixa::before{background:#ef4444}
 @media(prefers-color-scheme:dark){#view-calendar #legend .legend-chip{background:#182438;border-color:#3a4b63;color:#eef4ff}}
 @media(max-width:600px){#view-calendar .section.card{margin-top:10px;padding:12px}#view-calendar #legend{gap:6px}#view-calendar #legend .legend-chip{padding:6px 8px;font-size:.62rem}}
 /* Instal·lació i marca d'aigua */
@@ -222,19 +220,6 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 .watermark{position:fixed;inset:0;z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:clamp(2.8rem,9vw,8rem);font-weight:900;letter-spacing:.08em;color:rgba(37,99,235,.055);transform:rotate(-28deg);user-select:none;white-space:nowrap}
 @media(prefers-color-scheme:dark){.install-banner{background:rgba(15,32,58,.97);border-color:#31518a;color:#e8eef7}.install-banner small{color:#a9bad0}.watermark{color:rgba(147,197,253,.06)}}
 @media(max-width:600px){.install-banner{bottom:calc(78px + var(--safe));padding:9px}.watermark{font-size:clamp(2.4rem,12vw,5rem)}}
-
-/* Instal·lació PWA: diàleg propi, com VMP Legal */
-.install-modal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(2,12,24,.72);backdrop-filter:blur(5px)}
-.install-modal.show{display:flex;animation:viewIn .22s ease-out}
-.install-card{width:min(430px,100%);background:var(--card);border:1px solid #93c5fd;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.35);padding:22px;color:var(--text);text-align:center}
-.install-card .install-icon{width:70px;height:70px;border-radius:18px;margin:0 auto 12px;display:block}
-.install-card h2{font-size:1.18rem;margin:0 0 7px;color:var(--primary)}
-.install-card p{font-size:.82rem;line-height:1.45;color:var(--muted);margin:0 0 14px}
-.install-card .install-main{width:100%;border:0;border-radius:12px;padding:12px;background:var(--primary);color:#fff;font-weight:800;font-size:.88rem;cursor:pointer;margin-bottom:8px}
-.install-card .install-later{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card);color:var(--text);font-weight:700;cursor:pointer}
-.install-card .install-help{display:none;text-align:left;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;margin:12px 0 0;color:#17325c;font-size:.76rem;line-height:1.45}
-.install-card .install-help.show{display:block}
-@media(prefers-color-scheme:dark){.install-card .install-help{background:#172554;border-color:#334155;color:#dbeafe}}
 </style>
 </head>
 <body>
@@ -243,17 +228,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <div class="year-pill"><button onclick="changeYear(-1)" aria-label="Any anterior">‹</button><select id="yearSelect" onchange="selectYear(this.value)"></select><button onclick="changeYear(1)" aria-label="Any següent">›</button></div>
 </div></header>
 
-<div class="watermark" aria-hidden="true">TIP 18675</div><div id="installBanner" class="install-banner" role="status"><div class="grow"><strong>Instal·la Registre Horari</strong><small>Accedeix més ràpidament des de la pantalla d’inici.</small></div><button class="btn primary small" onclick="installApp()">Instal·lar</button><button class="btn secondary small" onclick="dismissInstall()" aria-label="Tancar">×</button></div><div id="installModal" class="install-modal" role="dialog" aria-modal="true" aria-labelledby="installModalTitle">
-  <div class="install-card">
-    <img class="install-icon" src="icon-192.svg" alt="">
-    <h2 id="installModalTitle">Instal·la Registre Horari</h2>
-    <p id="installModalText">Afegeix Registre Horari a la pantalla d’inici per obrir-lo com una aplicació.</p>
-    <button type="button" class="install-main" id="installModalBtn">Instal·lar aplicació</button>
-    <button type="button" class="install-later" id="installModalLater">Ara no</button>
-    <div class="install-help" id="installModalHelp"></div>
-  </div>
-</div>
-<main>
+<div class="watermark" aria-hidden="true">TIP 18675</div><div id="installBanner" class="install-banner" role="status"><div class="grow"><strong>Instal·la Registre Horari</strong><small>Accedeix més ràpidament des de la pantalla d’inici.</small></div><button class="btn primary small" onclick="installApp()">Instal·lar</button><button class="btn secondary small" onclick="dismissInstall()" aria-label="Tancar">×</button></div><main>
 <section id="view-home" class="view active">
   <div class="section card hero">
     <div class="hero-top"><div><div class="eyebrow">Còmput anual</div><h2 id="saldo">+0:00</h2><div class="saldo" id="saldoText">Calculant…</div></div><div class="chip" id="progressPct">0%</div></div>
@@ -586,39 +561,18 @@ function addShift(){const nom=prompt("Nom del nou torn","Nou torn");if(!nom)retu
 function exportJSON(){ensureHistory();const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});download(blob,`registre-horari-${state.anyInici}.json`);toast("Còpia JSON exportada")}
 function importJSON(){document.getElementById("fileInput").click()}
 document.getElementById("fileInput").addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const raw=JSON.parse(reader.result);localStorage.setItem(KEY+".backup-"+Date.now(),JSON.stringify(state));state=migrate(raw);save();renderAll();toast("Dades importades")}catch(err){alert("El fitxer no és un JSON vàlid.")}e.target.value=""};reader.readAsText(f)})
-function exportCSV(){const rows=[["Data","Tipus","Torn","Entrada","Sortida","Hores","Notes"]];Object.entries(state.registres).sort().forEach(([k,r])=>{const s=r.tipus==="treball"?getShift(r.torn):null;rows.push([k,TYPE_NAMES[r.tipus]||r.tipus,s?.nom||"",r.entrada||"",r.sortida||"",r.tipus==="treball"?r.hores||0:r.horesConcepte||0,(r.notes||"").replace(/"/g,'""')])});const csv="\ufeff"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("
-");download(new Blob([csv],{type:"text/csv;charset=utf-8"}),`registre-horari-${state.anyInici}.csv`);toast("CSV exportat")}
+function exportCSV(){const rows=[["Data","Tipus","Torn","Entrada","Sortida","Hores","Notes"]];Object.entries(state.registres).sort().forEach(([k,r])=>{const s=r.tipus==="treball"?getShift(r.torn):null;rows.push([k,TYPE_NAMES[r.tipus]||r.tipus,s?.nom||"",r.entrada||"",r.sortida||"",r.tipus==="treball"?r.hores||0:r.horesConcepte||0,(r.notes||"").replace(/"/g,'""')])});const csv="\ufeff"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\n");download(new Blob([csv],{type:"text/csv;charset=utf-8"}),`registre-horari-${state.anyInici}.csv`);toast("CSV exportat")}
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function resetAll(){if(!confirm("Es creará una còpia local i després s'esborraran totes les dades. Continuar?"))return;localStorage.setItem(KEY+".backup-"+Date.now(),JSON.stringify(state));state=defaultState();save();renderAll();toast("Dades restablertes")}
 function openModal(id){document.getElementById(id).classList.add("open")}function closeModal(id){document.getElementById(id).classList.remove("open");if(id==="dayModal")editingDay=null;if(id==="trialModal")editingTrial=null}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove("show"),2200)}
 
 function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true}
-function isIos(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
-function isAndroid(){return /android/i.test(navigator.userAgent)}
-const installModal=document.getElementById("installModal"),installModalBtn=document.getElementById("installModalBtn"),installModalLater=document.getElementById("installModalLater"),installModalHelp=document.getElementById("installModalHelp"),installModalText=document.getElementById("installModalText");
-function closeInstallModal(){installModal?.classList.remove("show");sessionStorage.setItem(KEY+".installModalSeen","1")}
-function showInstallModal(){
- if(!installModal||isStandalone())return;
- installModal.classList.add("show");
- if(deferredPrompt){installModalText.textContent="L’aplicació està preparada per instal·lar-se. Amb un toc quedarà disponible com una app.";installModalHelp.classList.remove("show");return}
- if(isIos()){installModalText.textContent="A l’iPhone/iPad l’instal·lació es fa des de Compartir.";installModalHelp.innerHTML="<strong>Com instal·lar:</strong><br>1. Toca <strong>Compartir</strong>.<br>2. Tria <strong>Afegeix a la pantalla d’inici</strong>.<br>3. Confirma amb <strong>Afegeix</strong>.";installModalHelp.classList.add("show");return}
- installModalText.textContent="Afegeix Registre Horari a la pantalla d’inici per obrir-lo com una aplicació.";installModalHelp.innerHTML=isAndroid()?"Si el botó d’instal·lació no està disponible, Chrome encara no ha considerat la PWA instal·lable. Mantén la pàgina oberta i torna-ho a provar en uns segons.":"Si el botó d’instal·lació no està disponible, aquest navegador no ofereix el diàleg d’instal·lació directa.";installModalHelp.classList.add("show");
-}
-function updateInstallBanner(){const b=document.getElementById("installBanner"),btn=document.getElementById("installBtn");if(!b)return;const visible=!isStandalone()&&!localStorage.getItem(KEY+".installDismissed");b.classList.toggle("show",visible);if(btn)btn.style.display=!isStandalone()?"inline-block":"none"}
+function updateInstallBanner(){const b=document.getElementById("installBanner"),btn=document.getElementById("installBtn");if(!b)return;const ready=!!deferredPrompt;const visible=ready&&!isStandalone()&&!localStorage.getItem(KEY+".installDismissed");b.classList.toggle("show",visible);if(btn)btn.style.display=ready&&!isStandalone()?"inline-block":"none"}
 function dismissInstall(){localStorage.setItem(KEY+".installDismissed","1");document.getElementById("installBanner")?.classList.remove("show");document.getElementById("installBtn")?.style.setProperty("display","none")}
-async function installApp(){
- if(isStandalone())return;
- if(!deferredPrompt){showInstallModal();return}
- const promptEvent=deferredPrompt;deferredPrompt=null;
- try{promptEvent.prompt();const choice=await promptEvent.userChoice;if(choice.outcome==="accepted"){closeInstallModal();toast("Instal·lació iniciada")}else{deferredPrompt=promptEvent}}catch(e){deferredPrompt=promptEvent}
- updateInstallBanner();
-}
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;updateInstallBanner();if(installModal?.classList.contains("show"))showInstallModal()});
-window.addEventListener("appinstalled",()=>{deferredPrompt=null;localStorage.removeItem(KEY+".installDismissed");closeInstallModal();updateInstallBanner();toast("Registre Horari instal·lat")});
-installModalBtn?.addEventListener("click",installApp);
-installModalLater?.addEventListener("click",closeInstallModal);
-window.addEventListener("load",()=>{setTimeout(()=>{if(!isStandalone()&&sessionStorage.getItem(KEY+".installModalSeen")!=="1")showInstallModal()},1200)});
+async function installApp(){if(isStandalone())return;if(!deferredPrompt){toast("La instal·lació encara no està disponible en aquest navegador.");return}const promptEvent=deferredPrompt;deferredPrompt=null;updateInstallBanner();try{promptEvent.prompt();const choice=await promptEvent.userChoice;if(choice.outcome==="accepted")toast("Instal·lació iniciada")}catch(e){deferredPrompt=promptEvent;updateInstallBanner()}}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;updateInstallBanner()});
+window.addEventListener("appinstalled",()=>{deferredPrompt=null;localStorage.removeItem(KEY+".installDismissed");updateInstallBanner();toast("Registre Horari instal·lat")});
 window.addEventListener("online",()=>toast("Connexió recuperada"));window.addEventListener("offline",()=>toast("Mode offline"));
 if("serviceWorker" in navigator){
   window.addEventListener("load",async()=>{
