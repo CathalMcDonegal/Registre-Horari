@@ -185,6 +185,12 @@ main{padding-top:clamp(12px,1.8vw,22px)}
  .monthly-row.is-today{background:#102447}
 }
 
+/* Instal·lació i marca d'aigua */
+.install-banner{position:fixed;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);z-index:55;width:min(520px,calc(100% - 24px));display:none;align-items:center;gap:10px;padding:10px 12px;border:1px solid #93c5fd;border-radius:14px;background:rgba(239,246,255,.97);box-shadow:0 10px 28px rgba(15,23,42,.16);color:#17325c}
+.install-banner.show{display:flex}.install-banner .grow{flex:1;min-width:0}.install-banner strong{display:block;font-size:.78rem}.install-banner small{display:block;font-size:.64rem;color:#526783;margin-top:1px}.install-banner .btn{flex-shrink:0}
+.watermark{position:fixed;inset:0;z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:clamp(2.8rem,9vw,8rem);font-weight:900;letter-spacing:.08em;color:rgba(37,99,235,.055);transform:rotate(-28deg);user-select:none;white-space:nowrap}
+@media(prefers-color-scheme:dark){.install-banner{background:rgba(15,32,58,.97);border-color:#31518a;color:#e8eef7}.install-banner small{color:#a9bad0}.watermark{color:rgba(147,197,253,.06)}}
+@media(max-width:600px){.install-banner{bottom:calc(78px + var(--safe));padding:9px}.watermark{font-size:clamp(2.4rem,12vw,5rem)}}
 </style>
 </head>
 <body>
@@ -193,7 +199,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <div class="year-pill"><button onclick="changeYear(-1)" aria-label="Any anterior">‹</button><select id="yearSelect" onchange="selectYear(this.value)"></select><button onclick="changeYear(1)" aria-label="Any següent">›</button></div>
 </div></header>
 
-<main>
+<div class="watermark" aria-hidden="true">TIP 18675</div><div id="installBanner" class="install-banner" role="status"><div class="grow"><strong>Instal·la Registre Horari</strong><small>Accedeix més ràpidament des de la pantalla d’inici.</small></div><button class="btn primary small" onclick="installApp()">Instal·lar</button><button class="btn secondary small" onclick="dismissInstall()" aria-label="Tancar">×</button></div><main>
 <section id="view-home" class="view active">
   <div class="section card hero">
     <div class="hero-top"><div><div class="eyebrow">Còmput anual</div><h2 id="saldo">+0:00</h2><div class="saldo" id="saldoText">Calculant…</div></div><div class="chip" id="progressPct">0%</div></div>
@@ -532,8 +538,12 @@ function resetAll(){if(!confirm("Es creará una còpia local i després s'esborr
 function openModal(id){document.getElementById(id).classList.add("open")}function closeModal(id){document.getElementById(id).classList.remove("open");if(id==="dayModal")editingDay=null;if(id==="trialModal")editingTrial=null}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove("show"),2200)}
 
+function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true}
+function updateInstallBanner(){const b=document.getElementById("installBanner");if(!b)return;b.classList.toggle("show",!isStandalone()&&!localStorage.getItem(KEY+".installDismissed")&&!!deferredPrompt)}
+function dismissInstall(){localStorage.setItem(KEY+".installDismissed","1");document.getElementById("installBanner")?.classList.remove("show")}
 async function installApp(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}else alert("Obre el menú del navegador i tria «Instal·lar aplicació» o «Afegeix a la pantalla d'inici».")}
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;document.getElementById("installBtn").style.display="inline-block"});
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;document.getElementById("installBtn").style.display="inline-block";updateInstallBanner()});
+window.addEventListener("appinstalled",()=>{deferredPrompt=null;document.getElementById("installBanner")?.classList.remove("show");localStorage.removeItem(KEY+".installDismissed")});
 window.addEventListener("online",()=>toast("Connexió recuperada"));window.addEventListener("offline",()=>toast("Mode offline"));
 if("serviceWorker" in navigator){
   window.addEventListener("load",async()=>{
