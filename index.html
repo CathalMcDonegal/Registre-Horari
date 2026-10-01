@@ -185,6 +185,26 @@ main{padding-top:clamp(12px,1.8vw,22px)}
  .monthly-row.is-today{background:#102447}
 }
 
+/* Contrast del calendari */
+.calendar .day{color:#172033;background:#fff;border:1px solid #d9e2ef}
+.calendar .day .num{color:#172033;font-weight:900}.calendar .day .kind{color:#334155;font-weight:800}.calendar .day .hrs{color:#526783;font-weight:700}
+.calendar .day.weekend{background:#f1f5f9}
+.calendar .day.mati{background:#e0f2fe;color:#0c4a6e;border-color:#7dd3fc}.calendar .day.mati .num,.calendar .day.mati .kind,.calendar .day.mati .hrs{color:#0c4a6e}
+.calendar .day.tarda{background:#fef3c7;color:#78350f;border-color:#fcd34d}.calendar .day.tarda .num,.calendar .day.tarda .kind,.calendar .day.tarda .hrs{color:#78350f}
+.calendar .day.nit,.calendar .day.cs_nit,.calendar .day.fn{background:#312e81;color:#fff;border-color:#6366f1}.calendar .day.nit .num,.calendar .day.nit .kind,.calendar .day.nit .hrs,.calendar .day.cs_nit .num,.calendar .day.cs_nit .kind,.calendar .day.cs_nit .hrs,.calendar .day.fn .num,.calendar .day.fn .kind,.calendar .day.fn .hrs{color:#fff}
+.calendar .day.vacances,.calendar .day.assumptes,.calendar .day.dies_blaus,.calendar .day.festa{background:#dcfce7;color:#166534;border-color:#86efac}.calendar .day.vacances .num,.calendar .day.vacances .kind,.calendar .day.vacances .hrs,.calendar .day.assumptes .num,.calendar .day.assumptes .kind,.calendar .day.assumptes .hrs,.calendar .day.dies_blaus .num,.calendar .day.dies_blaus .kind,.calendar .day.dies_blaus .hrs,.calendar .day.festa .num,.calendar .day.festa .kind,.calendar .day.festa .hrs{color:#166534}
+.calendar .day.baixa{background:#fee2e2;color:#991b1b;border-color:#fca5a5}.calendar .day.baixa .num,.calendar .day.baixa .kind,.calendar .day.baixa .hrs{color:#991b1b}
+.calendar .day.judici{background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe}.calendar .day.judici .num,.calendar .day.judici .kind,.calendar .day.judici .hrs{color:#6b21a8}
+.calendar .day.selected{outline:3px solid #2563eb;outline-offset:-3px}
+@media(prefers-color-scheme:dark){
+.calendar .day{background:#111b2d;color:#e8eef7;border-color:#33465f}.calendar .day .num{color:#e8eef7}.calendar .day .kind{color:#cbd5e1}.calendar .day .hrs{color:#a9bad0}.calendar .day.weekend{background:#172235}
+.calendar .day.mati{background:#164e63;border-color:#38bdf8}.calendar .day.mati .num,.calendar .day.mati .kind,.calendar .day.mati .hrs{color:#e0f2fe}
+.calendar .day.tarda{background:#78350f;border-color:#f59e0b}.calendar .day.tarda .num,.calendar .day.tarda .kind,.calendar .day.tarda .hrs{color:#fef3c7}
+.calendar .day.nit,.calendar .day.cs_nit,.calendar .day.fn{background:#312e81;border-color:#818cf8}
+.calendar .day.vacances,.calendar .day.assumptes,.calendar .day.dies_blaus,.calendar .day.festa{background:#14532d;border-color:#4ade80}.calendar .day.vacances .num,.calendar .day.vacances .kind,.calendar .day.vacances .hrs,.calendar .day.assumptes .num,.calendar .day.assumptes .kind,.calendar .day.assumptes .hrs,.calendar .day.dies_blaus .num,.calendar .day.dies_blaus .kind,.calendar .day.dies_blaus .hrs,.calendar .day.festa .num,.calendar .day.festa .kind,.calendar .day.festa .hrs{color:#dcfce7}
+.calendar .day.baixa{background:#7f1d1d;border-color:#f87171}.calendar .day.baixa .num,.calendar .day.baixa .kind,.calendar .day.baixa .hrs{color:#fee2e2}
+.calendar .day.judici{background:#581c87;border-color:#c084fc}.calendar .day.judici .num,.calendar .day.judici .kind,.calendar .day.judici .hrs{color:#f3e8ff}
+}
 /* Instal·lació i marca d'aigua */
 .install-banner{position:fixed;left:50%;bottom:calc(82px + var(--safe));transform:translateX(-50%);z-index:55;width:min(520px,calc(100% - 24px));display:none;align-items:center;gap:10px;padding:10px 12px;border:1px solid #93c5fd;border-radius:14px;background:rgba(239,246,255,.97);box-shadow:0 10px 28px rgba(15,23,42,.16);color:#17325c}
 .install-banner.show{display:flex}.install-banner .grow{flex:1;min-width:0}.install-banner strong{display:block;font-size:.78rem}.install-banner small{display:block;font-size:.64rem;color:#526783;margin-top:1px}.install-banner .btn{flex-shrink:0}
