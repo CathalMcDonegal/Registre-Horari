@@ -30,7 +30,7 @@ main{width:100%;max-width:1440px;margin:0 auto;padding:clamp(10px,1.5vw,20px)}.v
 .chart{display:flex;align-items:flex-end;gap:clamp(5px,1vw,12px);height:190px;padding:14px 4px 8px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#f8fbff,transparent);border-radius:12px}.bar-wrap{height:100%;flex:1;display:flex;align-items:flex-end;justify-content:center;gap:2px}.bar{width:75%;max-width:42px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#38bdf8,#2563eb);min-height:2px;box-shadow:0 3px 8px rgba(37,99,235,.18)}.bar-label{font-size:.55rem;color:var(--muted);text-align:center;margin-top:4px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{display:block;font-size:.72rem;font-weight:750;color:var(--muted);margin:0 0 5px}input,select,textarea{width:100%;border:1px solid var(--line);background:#f8fafc;color:var(--text);border-radius:10px;padding:10px 11px;margin-bottom:10px}textarea{min-height:80px;resize:vertical}.check{display:flex;align-items:center;gap:8px;margin:5px 0 10px;font-size:.82rem}.check input{width:auto;margin:0}
 .modal-bg{position:fixed;inset:0;background:rgba(2,6,23,.48);z-index:100;display:none;align-items:flex-end}.modal-bg.open{display:flex}.modal{width:100%;max-width:620px;margin:auto auto 0;background:var(--card);border-radius:20px 20px 0 0;max-height:92dvh;overflow:auto;padding:17px 15px calc(18px + var(--safe))}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.modal-head h2{margin:0;font-size:1.05rem}.close{border:0;background:#eef2f7;border-radius:50%;width:32px;height:32px;font-size:1.2rem}.form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}.form-actions .primary{grid-column:1/-1}
-.empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:.82rem}.hint{font-size:.7rem;color:var(--muted);margin:-4px 0 10px}.setting-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;background:#f7faff}.setting-row:last-child{border-bottom:0}.setting-row small{color:var(--muted);display:block}.toast{position:fixed;left:50%;bottom:calc(88px + var(--safe));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:200;background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;font-size:.78rem;font-weight:700;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:.82rem}.hint{font-size:.7rem;color:var(--muted);margin:-4px 0 10px}.setting-row{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;background:#f7faff}.setting-row:last-child{border-bottom:0}.setting-row small{color:var(--muted);display:block}.note-icon-modal{max-width:620px}.note-icon-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.note-icon-grid button{border:1px solid var(--line);background:#f8fafc;color:var(--text);border-radius:13px;min-height:70px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:1.75rem;transition:.12s}.note-icon-grid button:hover{background:#eef5ff;border-color:#93c5fd;transform:translateY(-1px)}.note-icon-grid button small{font-size:.58rem;color:var(--muted);font-weight:750;line-height:1.1}.note-icon-current{font-size:1.2rem;font-weight:900}.note-icon-none{color:var(--muted)}@media(max-width:600px){.note-icon-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.note-icon-grid button{min-height:68px;font-size:1.65rem}.note-icon-grid button small{font-size:.54rem}}@media(prefers-color-scheme:dark){.note-icon-grid button{background:#0f192a}.note-icon-grid button:hover{background:#172554;border-color:#3b82f6}}.toast{position:fixed;left:50%;bottom:calc(88px + var(--safe));transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:200;background:#0f172a;color:#fff;padding:10px 14px;border-radius:999px;font-size:.78rem;font-weight:700;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
 @media(min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}.modal-bg{align-items:center}.modal{border-radius:20px;margin:auto}.fab{right:24px}}
 @media(max-width:600px){.monthly-summary>div{padding:8px}.monthly-summary strong{font-size:.9rem}.monthly-summary span{font-size:.58rem}main{padding:9px}.calendar{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;min-height:0}.monthly-list{display:none}.day{min-height:70px;padding:6px 4px;border-radius:8px}.day .num{font-size:.76rem}.day .kind{font-size:.5rem;line-height:1.1;margin-top:4px;-webkit-line-clamp:2}.day .hrs{font-size:.48rem}.dow{font-size:.52rem;padding:3px 1px}#calendarModeBtn{display:inline-block}.hero h2{font-size:1.8rem}.month-head{margin-bottom:12px}.month-head h2{font-size:1.08rem}}@media(max-width:390px){.monthly-row{grid-template-columns:42px minmax(0,1fr) auto;padding:10px 9px}.monthly-date b{font-size:1.05rem}.monthly-info strong{font-size:.76rem}.monthly-info small{font-size:.6rem}.hero h2{font-size:1.65rem}}
 /* Calendari: estructura visible i estable */
@@ -310,8 +310,49 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <label>Hores computables / reals</label><input type="number" id="dayHours" min="0" max="24" step=".25"><div class="hint" id="dayCalcHint"></div>
 </div>
 <div id="conceptFields" style="display:none"><label>Hores del concepte</label><input type="number" id="conceptHours" min="0" max="24" step=".25"></div>
-<label>Observació / icona</label><select id="dayNoteIcon"><option value="">Sense icona</option><option value="❌">❌ Metge</option><option value="👓">👓 Oculista</option><option value="🔧">🔧 Taller</option><option value="💊">💊 Farmàcia</option><option value="🦷">🦷 Dentista</option><option value="🏠">🏠 Assumpte personal</option><option value="📌">📌 Altres</option></select><label>Notes</label><textarea id="dayNotes" placeholder="Observacions…"></textarea>
+<label>Observació / icona</label><input type="hidden" id="dayNoteIcon"><button type="button" class="btn secondary" id="noteIconBtn" onclick="openNoteIconPicker()" style="width:100%;text-align:left;margin-bottom:10px">➕ Tria una icona</button><label>Notes</label><textarea id="dayNotes" placeholder="Observacions…"></textarea>
 <div class="form-actions"><button class="btn primary" onclick="saveDay()">Desar</button><button class="btn secondary" onclick="closeModal('dayModal')">Cancel·lar</button><button class="btn danger" id="deleteDayBtn" onclick="deleteDay()" style="display:none">Esborrar registre</button></div>
+</div></div>
+
+<div class="modal-bg" id="noteIconPicker"><div class="modal note-icon-modal">
+<div class="modal-head"><h2>Tria una icona</h2><button class="close" onclick="closeModal('noteIconPicker')">×</button></div>
+<p class="hint">Toca la icona que millor descrigui la situació.</p>
+<div class="note-icon-grid">
+<button type="button" onclick="selectNoteIcon('')">✕<small>Cap</small></button>
+<button type="button" onclick="selectNoteIcon('🩺')">🩺<small>Metge</small></button>
+<button type="button" onclick="selectNoteIcon('🏫')">🏫<small>Escola</small></button>
+<button type="button" onclick="selectNoteIcon('🏖️')">🏖️<small>Platja</small></button>
+<button type="button" onclick="selectNoteIcon('🏔️')">🏔️<small>Muntanya</small></button>
+<button type="button" onclick="selectNoteIcon('🏥')">🏥<small>Hospital</small></button>
+<button type="button" onclick="selectNoteIcon('⛽️')">⛽️<small>Gasolinera</small></button>
+<button type="button" onclick="selectNoteIcon('✈️')">✈️<small>Viatge</small></button>
+<button type="button" onclick="selectNoteIcon('☃️')">☃️<small>Neu</small></button>
+<button type="button" onclick="selectNoteIcon('🎉')">🎉<small>Celebració</small></button>
+<button type="button" onclick="selectNoteIcon('☎️')">☎️<small>Trucada</small></button>
+<button type="button" onclick="selectNoteIcon('👓')">👓<small>Oculista</small></button>
+<button type="button" onclick="selectNoteIcon('🔧')">🔧<small>Taller</small></button>
+<button type="button" onclick="selectNoteIcon('💊')">💊<small>Farmàcia</small></button>
+<button type="button" onclick="selectNoteIcon('🦷')">🦷<small>Dentista</small></button>
+<button type="button" onclick="selectNoteIcon('🏠')">🏠<small>Casa</small></button>
+<button type="button" onclick="selectNoteIcon('🚗')">🚗<small>Vehicle</small></button>
+<button type="button" onclick="selectNoteIcon('🚆')">🚆<small>Tren</small></button>
+<button type="button" onclick="selectNoteIcon('🚌')">🚌<small>Bus</small></button>
+<button type="button" onclick="selectNoteIcon('🛒')">🛒<small>Compres</small></button>
+<button type="button" onclick="selectNoteIcon('🏦')">🏦<small>Banc</small></button>
+<button type="button" onclick="selectNoteIcon('💶')">💶<small>Diners</small></button>
+<button type="button" onclick="selectNoteIcon('📚')">📚<small>Estudis</small></button>
+<button type="button" onclick="selectNoteIcon('🎓')">🎓<small>Formació</small></button>
+<button type="button" onclick="selectNoteIcon('⚖️')">⚖️<small>Judici</small></button>
+<button type="button" onclick="selectNoteIcon('👶')">👶<small>Nens</small></button>
+<button type="button" onclick="selectNoteIcon('🐶')">🐶<small>Mascota</small></button>
+<button type="button" onclick="selectNoteIcon('🍽️')">🍽️<small>Menjar</small></button>
+<button type="button" onclick="selectNoteIcon('🏋️')">🏋️<small>Gimnàs</small></button>
+<button type="button" onclick="selectNoteIcon('🎂')">🎂<small>Aniversari</small></button>
+<button type="button" onclick="selectNoteIcon('🎁')">🎁<small>Regal</small></button>
+<button type="button" onclick="selectNoteIcon('💻')">💻<small>Ordinador</small></button>
+<button type="button" onclick="selectNoteIcon('📅')">📅<small>Cita</small></button>
+<button type="button" onclick="selectNoteIcon('📌')">📌<small>Altres</small></button>
+</div>
 </div></div>
 
 <div class="modal-bg" id="bulkModal"><div class="modal">
@@ -534,7 +575,10 @@ function expectedWeek(){return state.horesAnuals/52}
 
 function changeWeek(days){weekAnchor=new Date(weekAnchor);weekAnchor.setDate(weekAnchor.getDate()+days);renderWeek()}
 
-function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("dayNoteIcon").value=r.noteIcon||"";document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();openModal("dayModal")}
+function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("dayNoteIcon").value=r.noteIcon||"";updateNoteIconButton();document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();openModal("dayModal")}
+function updateNoteIconButton(){const icon=document.getElementById("dayNoteIcon")?.value||"";const b=document.getElementById("noteIconBtn");if(!b)return;b.innerHTML=icon?'<span class="note-icon-current">'+icon+'</span> Canviar icona':'➕ Tria una icona'}
+function openNoteIconPicker(){updateNoteIconButton();openModal("noteIconPicker")}
+function selectNoteIcon(icon){document.getElementById("dayNoteIcon").value=icon||"";updateNoteIconButton();closeModal("noteIconPicker")}
 function fillShiftSelects(){const opts=state.torns.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.abbr||s.nom)} · ${escapeHtml(s.nom)} (${s.hores}h)</option>`).join("");document.getElementById("dayShift").innerHTML=opts;document.getElementById("bulkShift").innerHTML=opts}
 function shiftChanged(){const s=getShift(document.getElementById("dayShift").value);if(s){document.getElementById("dayStart").value=s.inici;document.getElementById("dayEnd").value=s.fi;document.getElementById("dayHours").value=defaultShiftHours(s);updateHint()}}
 function updateHint(){const s=getShift(document.getElementById("dayShift").value),h=Number(document.getElementById("dayHours").value)||0,base=isMorning(s)?7.5:Number(s?.hores)||0;document.getElementById("dayCalcHint").textContent=s?`Base del torn: ${base} h · Acumulades generades si superes la base: ${Math.max(0,h-base).toFixed(2)} h`:""}
