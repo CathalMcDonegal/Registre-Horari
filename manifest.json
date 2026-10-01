@@ -6,5 +6,12 @@
   "background_color": "#f4f7fb",
   "theme_color": "#0f172a",
   "lang": "ca",
-  "description": "Registre horari personal"
+  "description": "Registre horari personal",
+  "icons": [
+    {
+      "src": "icons/app-icon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
 }
