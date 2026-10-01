@@ -307,7 +307,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <label>Hores computables / reals</label><input type="number" id="dayHours" min="0" max="24" step=".25"><div class="hint" id="dayCalcHint"></div>
 </div>
 <div id="conceptFields" style="display:none"><label>Hores del concepte</label><input type="number" id="conceptHours" min="0" max="24" step=".25"></div>
-<label>Notes</label><textarea id="dayNotes" placeholder="Observacions…"></textarea>
+<label>Observació / icona</label><select id="dayNoteIcon"><option value="">Sense icona</option><option value="❌">❌ Metge</option><option value="👓">👓 Oculista</option><option value="🔧">🔧 Taller</option><option value="💊">💊 Farmàcia</option><option value="🦷">🦷 Dentista</option><option value="🏠">🏠 Assumpte personal</option><option value="📌">📌 Altres</option></select><label>Notes</label><textarea id="dayNotes" placeholder="Observacions…"></textarea>
 <div class="form-actions"><button class="btn primary" onclick="saveDay()">Desar</button><button class="btn secondary" onclick="closeModal('dayModal')">Cancel·lar</button><button class="btn danger" id="deleteDayBtn" onclick="deleteDay()" style="display:none">Esborrar registre</button></div>
 </div></div>
 
@@ -335,14 +335,14 @@ const MONTHS=["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","S
 const DOW=["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
 const TYPE_NAMES={treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",dies_blaus:"Dies Blaus",baixa:"Baixa",guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",hores_extres:"Hores extres",altres:"Altres / Permís"};
 const DEFAULT_SHIFTS=[
-{id:"mati",nom:"Matí",abbr:"M",hores:7.5,inici:"07:00",fi:"14:30"},
-{id:"tarda",nom:"Tarda",abbr:"T",hores:7.5,inici:"14:30",fi:"22:00"},
-{id:"nit",nom:"Nit",abbr:"N",hores:9,inici:"22:00",fi:"07:00"},
-{id:"cs_dia",nom:"Cap de setmana Dia",abbr:"Dia 12h",hores:12,inici:"07:00",fi:"19:00"},
-{id:"cs_nit",nom:"Cap de setmana Nit",abbr:"Nit 12h",hores:12,inici:"19:00",fi:"07:00"},
-{id:"fd",nom:"Festiu Dia",abbr:"FD 12h",hores:12,inici:"07:00",fi:"19:00"},
-{id:"fn",nom:"Festiu Nit",abbr:"FN 12h",hores:12,inici:"19:00",fi:"07:00"},
-{id:"festa",nom:"Festa",abbr:"Festa",hores:7.5,inici:"07:00",fi:"14:30"}
+{id:"mati",nom:"Matí",abbr:"M",hores:7.5,inici:"07:00",fi:"14:30",color:"#facc15"},
+{id:"tarda",nom:"Tarda",abbr:"T",hores:7.5,inici:"14:30",fi:"22:00",color:"#fb923c"},
+{id:"nit",nom:"Nit",abbr:"N",hores:9,inici:"22:00",fi:"07:00",color:"#60a5fa"},
+{id:"cs_dia",nom:"Cap de setmana Dia",abbr:"Dia 12h",hores:12,inici:"07:00",fi:"19:00",color:"#22c55e"},
+{id:"cs_nit",nom:"Cap de setmana Nit",abbr:"Nit 12h",hores:12,inici:"19:00",fi:"07:00",color:"#6366f1"},
+{id:"fd",nom:"Festiu Dia",abbr:"FD 12h",hores:12,inici:"07:00",fi:"19:00",color:"#16a34a"},
+{id:"fn",nom:"Festiu Nit",abbr:"FN 12h",hores:12,inici:"19:00",fi:"07:00",color:"#312e81"},
+{id:"festa",nom:"Festa",abbr:"Festa",hores:7.5,inici:"07:00",fi:"14:30",color:"#94a3b8"}
 ];
 const DEFAULT_HOLIDAYS={"2026-01-01":"Cap d'Any","2026-01-06":"Reis","2026-04-03":"Divendres Sant","2026-04-06":"Dilluns de Pasqua","2026-05-01":"Festa del Treball","2026-06-24":"Sant Joan","2026-08-15":"Assumpció","2026-09-11":"Diada Nacional CAT","2026-09-24":"La Mercè","2026-10-12":"Dia Nacional Espanya","2026-12-08":"Immaculada","2026-12-25":"Nadal","2026-12-26":"Sant Esteve","2027-01-01":"Cap d'Any","2027-01-06":"Reis"};
 
@@ -372,7 +372,7 @@ function migrate(raw){
   const out={...base,...raw};
   out.torns=Array.isArray(raw.torns)&&raw.torns.length?raw.torns:clone(DEFAULT_SHIFTS);
   out.registres=raw.registres||{};out.judicis=raw.judicis||[];out.historic=raw.historic||{};
-  out.festius=raw.festius||clone(DEFAULT_HOLIDAYS);
+  out.festius=raw.festius||clone(DEFAULT_HOLIDAYS); const defaultColors={mati:"#facc15",tarda:"#fb923c",nit:"#60a5fa",cs_dia:"#22c55e",cs_nit:"#6366f1",fd:"#16a34a",fn:"#312e81",festa:"#94a3b8"}; out.torns.forEach(t=>{if(!t.color)t.color=defaultColors[t.id]||"#93c5fd"});
   out.blausTotals=raw.blausTotals||0;out.gnpTotals=raw.gnpTotals||0;out.gnitTotals=raw.gnitTotals||0;out.acumTotals=raw.acumTotals||0;
   // Compatibilitat amb la migració anterior: els matins de <=7.5 h passen a 8 h.
   Object.values(out.registres).forEach(r=>{if(r?.tipus==="treball"&&isMorning(out.torns.find(t=>t.id===r.torn))&&(Number(r.hores)||0)<=7.5)r.hores=8});
@@ -493,7 +493,7 @@ function renderCalendar(){
  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
  for(let i=0;i<offset;i++)html+=`<div></div>`;
  for(let n=1;n<=days;n++){const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r?.tipus==="treball"?getShift(r.torn):null;let cls="day "+(isWeekend(d)?"weekend ":"")+(holiday(d)?" holiday ":"")+(selected.has(k)?" selected ":"")+(r?.notes?.trim()?" has-note ":"");if(r)cls+=r.tipus==="treball"?` ${s?.id==="mati"?"mati":s?.id==="tarda"?"tarda":s?.id==="nit"?"nit":s?.id||"work"}`:` ${r.tipus}`;const label=r?(r.tipus==="treball"?s?.abbr||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"";const hours=r?(r.tipus==="treball"?plainHours(r.hores||0):plainHours(r.horesConcepte||0)):"";html+=`<button class="${cls}" onclick="clickDay('${k}')"><span class="num">${n}</span><span class="kind">${escapeHtml(label)}</span><span class="hrs">${hours}</span></button>`}
- cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=["mati","tarda","nit","vacances","assumptes","baixa"].map(x=>{const names={mati:"Matí",tarda:"Tarda",nit:"Nit",vacances:"Vacances",assumptes:"Assumptes propis",baixa:"Baixa"};return `<span class="legend-chip legend-${x}">${names[x]}</span>`}).join("");
+ cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=state.torns.map(t=>`<span class="legend-chip" style="--legend-color:${escapeHtml(t.color||"#93c5fd")}"><i></i>${escapeHtml(t.nom)}</span>`).concat([{name:"Vacances",color:"#22c55e"},{name:"Assumptes propis",color:"#16a34a"},{name:"Baixa",color:"#ef4444"}].map(x=>`<span class="legend-chip" style="--legend-color:${x.color}"><i></i>${x.name}</span>`)).join("");
 }
 function toggleCalendarMode(){
  const list=document.getElementById("monthlyList"),grid=document.getElementById("calendar"),btn=document.getElementById("calendarModeBtn");
@@ -531,12 +531,12 @@ function expectedWeek(){return state.horesAnuals/52}
 
 function changeWeek(days){weekAnchor=new Date(weekAnchor);weekAnchor.setDate(weekAnchor.getDate()+days);renderWeek()}
 
-function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();openModal("dayModal")}
+function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("dayNoteIcon").value=r.noteIcon||"";document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();openModal("dayModal")}
 function fillShiftSelects(){const opts=state.torns.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.abbr||s.nom)} · ${escapeHtml(s.nom)} (${s.hores}h)</option>`).join("");document.getElementById("dayShift").innerHTML=opts;document.getElementById("bulkShift").innerHTML=opts}
 function shiftChanged(){const s=getShift(document.getElementById("dayShift").value);if(s){document.getElementById("dayStart").value=s.inici;document.getElementById("dayEnd").value=s.fi;document.getElementById("dayHours").value=defaultShiftHours(s);updateHint()}}
 function updateHint(){const s=getShift(document.getElementById("dayShift").value),h=Number(document.getElementById("dayHours").value)||0,base=isMorning(s)?7.5:Number(s?.hores)||0;document.getElementById("dayCalcHint").textContent=s?`Base del torn: ${base} h · Acumulades generades si superes la base: ${Math.max(0,h-base).toFixed(2)} h`:""}
 function updateDayForm(){const t=document.getElementById("dayType").value,work=t==="treball";document.getElementById("workFields").style.display=work?"block":"none";document.getElementById("conceptFields").style.display=!work&&t?"block":"none";if(work)updateHint()}
-function saveDay(){if(!editingDay)return;const t=document.getElementById("dayType").value;if(!t)delete state.registres[editingDay];else{const r={tipus:t,notes:document.getElementById("dayNotes").value.trim()};if(t==="treball"){r.torn=document.getElementById("dayShift").value;r.entrada=document.getElementById("dayStart").value;r.sortida=document.getElementById("dayEnd").value;r.hores=Number(document.getElementById("dayHours").value)||0}else r.horesConcepte=Number(document.getElementById("conceptHours").value)||0;state.registres[editingDay]=r}save();closeModal("dayModal");renderAll();toast("Jornada desada")}
+function saveDay(){if(!editingDay)return;const t=document.getElementById("dayType").value;if(!t)delete state.registres[editingDay];else{const r={tipus:t,notes:document.getElementById("dayNotes").value.trim(),noteIcon:document.getElementById("dayNoteIcon").value||""};if(t==="treball"){r.torn=document.getElementById("dayShift").value;r.entrada=document.getElementById("dayStart").value;r.sortida=document.getElementById("dayEnd").value;r.hores=Number(document.getElementById("dayHours").value)||0}else r.horesConcepte=Number(document.getElementById("conceptHours").value)||0;state.registres[editingDay]=r}save();closeModal("dayModal");renderAll();toast("Jornada desada")}
 function deleteDay(){if(!editingDay||!confirm("Esborrar aquest registre?"))return;delete state.registres[editingDay];save();closeModal("dayModal");renderAll();toast("Registre esborrat")}
 function openBulk(){if(!selected.size)return toast("Selecciona almenys un dia");document.getElementById("bulkCount").textContent=`${selected.size} dia(s) seleccionat(s)`;fillShiftSelects();updateBulk();openModal("bulkModal")}
 function updateBulk(){const t=document.getElementById("bulkType").value;document.getElementById("bulkWork").style.display=t==="treball"?"block":"none";document.getElementById("bulkHours").style.display=!["treball","esborrar"].includes(t)?"block":"none"}
