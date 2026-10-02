@@ -245,13 +245,13 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 </section>
 
 <section id="view-calendar" class="view">
-  <div class="toolbar"><button class="btn secondary small" onclick="goToday()">Avui</button><button class="btn secondary small" id="calendarModeBtn" onclick="toggleCalendarMode()">Vista mensual</button><div class="grow"></div><button class="btn secondary small" onclick="toggleMulti()">Selecció múltiple</button><button class="btn primary small" id="multiApply" style="display:none" onclick="openBulk()">Aplicar</button></div>
+  <div class="toolbar"><button class="btn secondary small" onclick="goToday()">Avui</button><button class="btn secondary small" id="calendarModeBtn" onclick="toggleCalendarMode()">Vista mensual</button><div class="grow"></div><button class="btn secondary small" id="calendarMultiToggle" onclick="toggleMulti()">Selecció múltiple</button><button class="btn primary small" id="multiApply" style="display:none" onclick="openBulk()">Aplicar</button></div>
   <div class="card calendar-card"><div class="month-head"><button onclick="changeMonth(-1)">‹</button><h2 id="monthTitle"></h2><button onclick="changeMonth(1)">›</button></div><div class="calendar" id="calendar"></div><div class="monthly-list" id="monthlyList" style="display:none"></div></div>
   <div class="section card"><div class="card-title">Llegenda</div><div class="actions" id="legend"></div></div>
 </section>
 
 <section id="view-week" class="view">
-  <div class="toolbar"><button class="btn secondary small" onclick="changeWeek(-7)">‹</button><div class="grow" id="weekTitle" style="font-weight:800;text-align:center"></div><button class="btn secondary small" onclick="changeWeek(7)">›</button><button class="btn secondary small" onclick="toggleMulti()">Selecció múltiple</button><button class="btn primary small" id="weekMultiApply" style="display:none" onclick="openBulk()">Aplicar</button></div>
+  <div class="toolbar"><button class="btn secondary small" onclick="changeWeek(-7)">‹</button><div class="grow" id="weekTitle" style="font-weight:800;text-align:center"></div><button class="btn secondary small" onclick="changeWeek(7)">›</button><button class="btn secondary small" id="weekMultiToggle" onclick="toggleMulti()">Selecció múltiple</button><button class="btn primary small" id="weekMultiApply" style="display:none" onclick="openBulk()">Aplicar</button></div>
   <div class="card"><div class="week" id="weekList"></div></div>
   <div class="card"><div class="card-title">Total setmana</div><div class="stats" id="weekStats"></div></div>
 </section>
@@ -357,7 +357,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 
 <div class="modal-bg" id="bulkModal"><div class="modal">
 <div class="modal-head"><h2>Aplicar als dies seleccionats</h2><button class="close" onclick="closeModal('bulkModal')">×</button></div>
-<p class="hint" id="bulkCount"></p><label>Acció</label><select id="bulkType" onchange="updateBulk()"><option value="treball">Treball</option><option value="vacances">Vacances</option><option value="assumptes">Assumptes personals</option><option value="dies_blaus">Dies Blaus</option><option value="guardia_np">Guàrdia No Presencial</option><option value="hores_acum">Hores acumulades</option><option value="hores_extres">Hores extres</option><option value="altres">Permís per hores</option><option value="esborrar">Esborrar</option></select>
+<p class="hint" id="bulkCount"></p><label>Acció</label><select id="bulkType" onchange="updateBulk()"><option value="treball">Treball</option><option value="vacances">Vacances</option><option value="assumptes">Assumptes personals</option><option value="dies_blaus">Dies Blaus</option><option value="guardia_np">Guàrdia No Presencial</option><option value="hores_acum">Hores acumulades</option><option value="hores_extres">Hores extres</option><option value="altres">Permís per hores</option><option value="baixa">Baixa</option><option value="esborrar">Esborrar</option></select>
 <div id="bulkWork"><label>Torn</label><select id="bulkShift"></select></div><div id="bulkHours"><label>Hores</label><input type="number" id="bulkHoursInput" value="7.5" step=".25"></div>
 <div class="form-actions"><button class="btn primary" onclick="applyBulk()">Aplicar</button><button class="btn secondary" onclick="closeModal('bulkModal')">Cancel·lar</button></div>
 </div></div>
@@ -378,7 +378,7 @@ const KEY="registreHorariMossos";
 const MONTHS=["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
 const DOW=["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
 const TYPE_NAMES={treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",dies_blaus:"Dies Blaus",baixa:"Baixa",guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",hores_extres:"Hores extres",altres:"Permís per hores"};
-const TYPE_COLORS={vacances:"#bbf7d0",assumptes:"#22c55e",dies_blaus:"#16a34a",baixa:"#fca5a5",guardia_np:"#86efac",hores_acum:"#4ade80",hores_extres:"#34d399",altres:"#86efac"};
+const TYPE_COLORS={vacances:"#bbf7d0",assumptes:"#22c55e",dies_blaus:"#16a34a",baixa:"#fca5a5",guardia_np:"#86efac",hores_acum:"#4ade80",hores_extres:"#fde047",altres:"#86efac"};
 const DEFAULT_SHIFTS=[
 {id:"mati",nom:"Matí",abbr:"M",hores:7.5,inici:"07:00",fi:"14:30",color:"#f4d35e"},
 {id:"tarda",nom:"Tarda",abbr:"T",hores:7.5,inici:"14:30",fi:"22:00",color:"#f59e0b"},
@@ -465,8 +465,10 @@ function recoverLocalData(){
 function load(){
   let recovered=false;
   try{
-    const raw=localStorage.getItem(KEY);
-    if(raw)state=migrate(JSON.parse(raw));else state=defaultState();
+    const main=localStorage.getItem(KEY), latest=localStorage.getItem(KEY+".latest");
+    const mainData=main?JSON.parse(main):null, latestData=latest?JSON.parse(latest):null;
+    const rawData=mainData&&latestData?(Number(latestData._savedAt)||0)>(Number(mainData._savedAt)||0)?latestData:mainData:(mainData||latestData);
+    if(rawData)state=migrate(rawData);else state=defaultState();
     recovered=recoverLocalData();
   }catch(e){state=defaultState()}
   const now=new Date(); currentMonth=new Date(now.getFullYear(),now.getMonth(),1); weekAnchor=startOfWeek(now);
@@ -475,7 +477,16 @@ function load(){
 }
 function snapshot(){return {horesAnuals:state.horesAnuals,vacancesTotals:state.vacancesTotals,assumptesTotals:state.assumptesTotals,blausTotals:state.blausTotals,gnpTotals:state.gnpTotals,gnitTotals:state.gnitTotals,acumTotals:state.acumTotals,festius:clone(state.festius),registres:clone(state.registres),judicis:clone(state.judicis)}}
 function ensureHistory(){state.historic=state.historic||{};state.historic[String(state.anyInici)]=state.historic[String(state.anyInici)]||snapshot()}
-function save(){ensureHistory();localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){
+ ensureHistory();
+ state._savedAt=Date.now();
+ const payload=JSON.stringify(state);
+ localStorage.setItem(KEY,payload);
+ localStorage.setItem(KEY+".latest",payload);
+}
+function saveOnHide(){try{save()}catch(e){}}
+window.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveOnHide()});
+window.addEventListener("pagehide",saveOnHide);
 function setActiveYear(y){
   y=Number(y);if(!y||y===state.anyInici)return;
   ensureHistory();state.historic[String(state.anyInici)]=snapshot();const d=state.historic[String(y)];
@@ -521,29 +532,39 @@ function renderHome(){
  const d=parseKey(todayKey()),r=state.registres[todayKey()],box=document.getElementById("todayCard");
  if(r){const s=r.tipus==="treball"?getShift(r.torn):null;box.innerHTML=`<div class="card-title">Avui · ${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</div><div class="today"><div class="today-date"><b>${d.getDate()}</b><span>${MONTHS[d.getMonth()].slice(0,3)}</span></div><div class="today-main"><b>${escapeHtml(r.tipus==="treball"?(s?.nom||"Treball"):TYPE_NAMES[r.tipus]||r.tipus)}</b><small>${r.tipus==="treball"?`${r.entrada||s?.inici||""} → ${r.sortida||s?.fi||""} · ${plainHours(r.hores||0)} h`:(plainHours(r.horesConcepte||0)+" h")}</small></div><button class="btn secondary small" onclick="openDay('${todayKey()}')">Editar</button></div>`}
  else box.innerHTML=`<div class="card-title">Avui · ${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</div><div class="today"><div class="today-date"><b>${d.getDate()}</b><span>${MONTHS[d.getMonth()].slice(0,3)}</span></div><div class="today-main"><b>Encara sense registre</b><small>${holiday(d)?"Avui és festiu · ":""}Prepara la jornada en segons.</small></div><button class="btn primary small" onclick="openDay('${todayKey()}')">Registrar</button></div>`;
- const qs=[["green",fmtHours(c.accum),"Acumulades"],["purple",plainHours(state.vacancesTotals-c.vac)+" h","Vacances restants"],["cyan",plainHours(state.assumptesTotals-c.pers)+" h","Assumptes restants"],["blue",plainHours(c.gnp)+" h","GNP fetes"],["pink",plainHours(c.gnit)+" h","Nits"],["orange",plainHours(c.extra)+" h","Extres"],["green",plainHours(c.blue)+" h","Blaus usats"],["purple",String(state.judicis.filter(j=>!j.celebrat).length),"Judicis pendents"]];
+ const qs=[["green",fmtHours(c.accum),"Acumulades"],["purple",plainHours(state.vacancesTotals-c.vac)+" h","Vacances restants"],["cyan",plainHours(state.assumptesTotals-c.pers)+" h","Assumptes restants"],["blue",plainHours(c.gnp)+" h","GNP fetes"],["pink",plainHours(c.gnit)+" h","Nits"],["orange",plainHours(c.extra)+" h","Extres"],["green",plainHours(c.blue)+" h","Dies Blaus"],["purple",String(state.judicis.filter(j=>!j.celebrat).length),"Judicis pendents"]];
  document.getElementById("quickStats").innerHTML=qs.map(x=>`<div class="stat ${x[0]}"><b>${x[1]}</b><span>${x[2]}</span></div>`).join("");
- const upcoming=[...state.judicis].filter(j=>j.data).sort((a,b)=>(a.data+(a.hora||"")).localeCompare(b.data+(b.hora||""))).filter(j=>!j.celebrat).slice(0,3);
- const nextDays=[];for(let i=0;i<14;i++){const x=new Date();x.setDate(x.getDate()+i);const r2=state.registres[key(x)];if(r2&&key(x)!==todayKey())nextDays.push({d:x,r:r2})}
- let html=upcoming.map(j=>`<div class="row" onclick="openTrial(${state.judicis.indexOf(j)})"><div class="grow"><strong>⚖️ ${escapeHtml(j.jutjat||"Judici")} · ${j.hora||""}</strong><small>${j.data} · ${escapeHtml(j.procediment||"")}</small></div><span class="chip ${j.cobrament?"ok":"warn"}">${j.cobrament?"Cobrat":"Pendent"}</span></div>`).join("");
- html+=nextDays.slice(0,3).map(o=>{const s=o.r.tipus==="treball"?getShift(o.r.torn):null;return `<div class="row"><div class="grow"><strong>📅 ${DOW[o.d.getDay()]} ${o.d.getDate()} · ${escapeHtml(o.r.tipus==="treball"?s?.nom||"Treball":TYPE_NAMES[o.r.tipus]||o.r.tipus)}</strong><small>${o.r.tipus==="treball"?`${o.r.entrada||s?.inici||""} → ${o.r.sortida||s?.fi||""}`:""}</small></div></div>`}).join("");
- document.getElementById("upcoming").innerHTML=html||`<div class="empty">No hi ha res programat als propers dies.</div>`;
- const alerts=[];const pendingShift=state.judicis.filter(j=>!j.celebrat&&j.canviTorn).length;const pendingPay=state.judicis.filter(j=>j.celebrat&&!j.cobrament).length;if(pendingShift)alerts.push(`⚠️ ${pendingShift} judici(s) amb canvi de torn pendent`);if(pendingPay)alerts.push(`💰 ${pendingPay} judici(s) pendents de cobrament`);if(!r)alerts.push(`🕐 Avui encara no has registrat la jornada`);
- document.getElementById("alerts").innerHTML=alerts.length?alerts.map(a=>`<div class="row"><div class="grow"><strong>${a}</strong></div></div>`).join(""):`<div class="empty">Tot al dia.</div>`;
+ const today=todayKey();
+ const upcomingTrials=state.judicis.map((j,i)=>({...j,i})).filter(j=>j.data&&j.data>=today&&!j.celebrat).sort((a,b)=>(a.data+(a.hora||"")).localeCompare(b.data+(b.hora||""))).slice(0,5);
+ const upcomingIcons=[];
+ for(let i=0;i<60;i++){const x=new Date();x.setDate(x.getDate()+i);const k=key(x),r2=state.registres[k];if(r2?.noteIcon)upcomingIcons.push({d:x,k,r:r2});}
+ let html=upcomingTrials.map(j=>`<div class="row" onclick="openTrial(${j.i})"><div class="grow"><strong>⚖️ ${escapeHtml(j.jutjat||"Judici")} · ${j.hora||""}</strong><small>${j.data} · ${escapeHtml(j.procediment||"")}</small></div><span class="chip ${j.cobrament?"ok":"warn"}">${j.cobrament?"Cobrat":"Pendent"}</span></div>`).join("");
+ html+=upcomingIcons.slice(0,5).map(o=>`<div class="row" onclick="openDay('${o.k}')"><div class="grow"><strong>🔔 ${DOW[o.d.getDay()]} ${o.d.getDate()} ${MONTHS[o.d.getMonth()]}</strong><small>Dia amb icona / observació</small></div><span class="chip info">${escapeHtml(o.r.noteIcon==="red_plus"?"➕":o.r.noteIcon)}</span></div>`).join("");
+ document.getElementById("upcoming").innerHTML=html||`<div class="empty">No hi ha judicis ni dies amb icones programats.</div>`;
+ const pending=state.judicis.map((j,i)=>({...j,i})).filter(j=>!j.celebrat||j.canviTorn||(j.celebrat&&!j.cobrament));
+ const alerts=[];
+ pending.forEach(j=>{const reasons=[];if(!j.celebrat)reasons.push("judici pendent");if(j.canviTorn)reasons.push("canvi de torn");if(j.celebrat&&!j.cobrament)reasons.push("pendent de cobrament");alerts.push(`<div class="row" onclick="openTrial(${j.i})" style="cursor:pointer"><div class="grow"><strong>⚖️ ${escapeHtml(j.jutjat||"Judici")} · ${j.data||"sense data"}</strong><small>${escapeHtml(reasons.join(" · "))}</small></div></div>`)});
+ if(!r)alerts.push(`<div class="row"><div class="grow"><strong>🕐 Avui encara no has registrat la jornada</strong></div></div>`);
+ document.getElementById("alerts").innerHTML=alerts.length?alerts.join(""):`<div class="empty">Tot al dia.</div>`;
 }
 function showView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));if(v==="calendar")renderCalendar();if(v==="week")renderWeek();if(v==="trials")renderTrials();if(v==="stats")renderStats();if(v==="more")renderMore()}
 function changeMonth(n){currentMonth=new Date(currentMonth.getFullYear(),currentMonth.getMonth()+n,1);renderCalendar()}
 function goToday(){const d=new Date();currentMonth=new Date(d.getFullYear(),d.getMonth(),1);renderCalendar()}
-function syncMultiUi(){const a=document.getElementById("multiApply"),b=document.getElementById("weekMultiApply");if(a){a.style.display=multi?"inline-block":"none";a.setAttribute("aria-pressed",multi?"true":"false");a.textContent=multi?"Acabar selecció":"Aplicar"}if(b){b.style.display=multi?"inline-block":"none";b.setAttribute("aria-pressed",multi?"true":"false");b.textContent=multi?"Acabar selecció":"Aplicar"}}
+function syncMultiUi(){
+ const a=document.getElementById("multiApply"),b=document.getElementById("weekMultiApply"),c=document.getElementById("calendarMultiToggle"),d=document.getElementById("weekMultiToggle");
+ [a,b].forEach(x=>{if(x){x.style.display=multi?"inline-block":"none";x.setAttribute("aria-pressed",multi?"true":"false");x.textContent=multi?"Acabar selecció":"Aplicar"}});
+ [c,d].forEach(x=>{if(x){x.setAttribute("aria-pressed",multi?"true":"false");x.textContent=multi?"Selecció activa":"Selecció múltiple"}});
+}
 function toggleMulti(){multi=!multi;if(!multi)selected.clear();syncMultiUi();renderCalendar();renderWeek()}
-function clickDay(k){if(multi){selected.has(k)?selected.delete(k):selected.add(k);renderCalendar();return}openDay(k)}
-function clickWeekDay(k){if(multi){selected.has(k)?selected.delete(k):selected.add(k);renderWeek();return}openDay(k)}
+function toggleSelectedDay(k){if(!multi)return openDay(k);selected.has(k)?selected.delete(k):selected.add(k);renderCalendar();renderWeek()}
+function clickDay(k){toggleSelectedDay(k)}
+function clickWeekDay(k){toggleSelectedDay(k)}
 function renderCalendar(){
  const y=currentMonth.getFullYear(),m=currentMonth.getMonth();document.getElementById("monthTitle").textContent=`${MONTHS[m]} ${y}`;const cal=document.getElementById("calendar");let html=DOW.slice(1).concat(["Dg"]).map(x=>`<div class="dow">${x}</div>`).join("");
  const first=new Date(y,m,1),offset=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate();
  for(let i=0;i<offset;i++)html+=`<div></div>`;
  for(let n=1;n<=days;n++){const d=new Date(y,m,n),k=key(d),r=state.registres[k],s=r?.tipus==="treball"?getShift(r.torn):null,jud=state.judicis.filter(j=>j.data===k);let cls="day "+(isWeekend(d)?"weekend ":"")+(holiday(d)?" holiday ":"")+(selected.has(k)?" selected ":"")+(r?.notes?.trim()?" has-note ":"")+(jud.length?" has-trial ":"");if(r)cls+=r.tipus==="treball"?` ${s?.id==="mati"?"mati":s?.id==="tarda"?"tarda":s?.id==="nit"?"nit":s?.id||"work"}`:` ${r.tipus}`;const label=r?(r.tipus==="treball"?s?.abbr||"Treball":TYPE_NAMES[r.tipus]||r.tipus):"";const hours=r?(r.tipus==="treball"?plainHours(r.hores||0):plainHours(r.horesConcepte||0)):"";const noteIcon=r?.noteIcon||"";const noteHtml=noteIcon==="red_plus"?'<span class="note-icon red-plus" title="Observació">➕</span>':(noteIcon?`<span class="note-icon" title="Observació">${escapeHtml(noteIcon)}</span>`:"");html+=`<button class="${cls}" ${recordStyle(r)} type="button" onclick="event.preventDefault();clickDay('${k}')"><span class="num">${n}</span><span class="kind">${escapeHtml(label)}</span>${jud.length?`<span class="trial-icon" title="${jud.length===1?"Judici":"Judicis"}" onclick="event.stopPropagation();openTrialsForDate('${k}')">⚖️<b>${jud.length>1?jud.length:""}</b></span>`:""}${noteHtml}<span class="hrs">${hours}</span></button>`}
- cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=state.torns.map(t=>`<span class="legend-chip" style="--legend-color:${escapeHtml(t.color||"#93c5fd")}"><i></i>${escapeHtml(t.nom)}</span>`).concat([{name:"Vacances",color:TYPE_COLORS.vacances},{name:"Assumptes personals",color:TYPE_COLORS.assumptes},{name:"Dies Blaus",color:TYPE_COLORS.dies_blaus},{name:"Permís per hores",color:TYPE_COLORS.altres},{name:"Baixa",color:TYPE_COLORS.baixa}].map(x=>`<span class="legend-chip" style="--legend-color:${x.color}"><i></i>${x.name}</span>`)).join("");
+ cal.innerHTML=html;const monthly=document.getElementById("monthlyList");if(monthly&&monthly.style.display!=="none")renderMonthly();document.getElementById("legend").innerHTML=state.torns.map(t=>`<span class="legend-chip" style="--legend-color:${escapeHtml(t.color||"#93c5fd")}"><i></i>${escapeHtml(t.nom)}</span>`).concat([{name:"Vacances",color:TYPE_COLORS.vacances},{name:"Assumptes personals",color:TYPE_COLORS.assumptes},{name:"Dies Blaus",color:TYPE_COLORS.dies_blaus},{name:"Permís per hores",color:TYPE_COLORS.altres},{name:"Hores extres",color:TYPE_COLORS.hores_extres},{name:"Baixa",color:TYPE_COLORS.baixa}].map(x=>`<span class="legend-chip" style="--legend-color:${x.color}"><i></i>${x.name}</span>`)).join("");
 }
 function toggleCalendarMode(){
  const list=document.getElementById("monthlyList"),grid=document.getElementById("calendar"),btn=document.getElementById("calendarModeBtn");
@@ -567,7 +588,7 @@ function renderMonthly(){
   }else if(holiday(d)){title=state.festius[k];detail="Festiu";cls="monthly-row";}
   if(k===todayKey())cls+=" is-today";
   if(jud.length)detail+=(detail?" · ":"")+"⚖️ "+jud.map(j=>(j.hora||"")+" "+(j.jutjat||"")).join(" · ");
-  rows.push('<div class="'+cls+'" onclick="openDay(\''+k+'\')"><div class="monthly-date"><b>'+n+'</b><small>'+DOW[d.getDay()]+'</small></div><div class="monthly-info"><strong>'+escapeHtml(title)+'</strong><small>'+escapeHtml(detail||"Toca per registrar")+'</small></div><div class="monthly-hours">'+hours+'</div></div>');
+  rows.push('<div class="'+cls+'" onclick="event.preventDefault();clickDay(\''+k+'\')"><div class="monthly-date"><b>'+n+'</b><small>'+DOW[d.getDay()]+'</small></div><div class="monthly-info"><strong>'+escapeHtml(title)+'</strong><small>'+escapeHtml(detail||"Toca per registrar")+'</small></div><div class="monthly-hours">'+hours+'</div></div>');
  }
  list.innerHTML='<div class="monthly-summary"><div><strong>'+registered+'</strong><span>dies registrats</span></div><div><strong>'+plainHours(totalHours)+' h</strong><span>hores del mes</span></div><div><strong>'+state.judicis.filter(j=>j.data&&j.data.startsWith(y+"-"+String(m+1).padStart(2,"0"))).length+'</strong><span>judicis</span></div></div>'+rows.join("");
 }
@@ -637,6 +658,7 @@ if("serviceWorker" in navigator){
   });
 }
 load();
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 updateInstallBanner();
 </script>
 </body>
