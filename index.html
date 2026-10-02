@@ -627,7 +627,26 @@ function renderStats(){
 }
 function renderMore(){document.getElementById("cfgHours").value=state.horesAnuals;document.getElementById("cfgVac").value=state.vacancesTotals;document.getElementById("cfgPers").value=state.assumptesTotals;document.getElementById("cfgBlue").value=state.blausTotals;document.getElementById("cfgGnp").value=state.gnpTotals;document.getElementById("cfgGnit").value=state.gnitTotals;document.getElementById("cfgAccum").value=state.acumTotals;document.getElementById("cfgTitle").value=state.titol;document.getElementById("cfgSubtitle").value=state.subtitol;document.getElementById("shiftConfig").innerHTML=state.torns.map((s,i)=>`<div class="setting-row"><div><strong><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${escapeHtml(s.color||"#93c5fd")};margin-right:6px;vertical-align:-1px"></span>${escapeHtml(s.nom)}</strong><small>${s.inici} → ${s.fi} · ${s.hores} h</small></div><div style="display:flex;align-items:center;gap:7px"><input type="color" value="${escapeHtml(s.color||"#93c5fd")}" title="Color del torn" onchange="setShiftColor(${i},this.value)" style="width:38px;height:32px;padding:2px;margin:0"><button class="btn secondary small" onclick="editShift(${i})">Editar</button></div></div>`).join("");document.getElementById("pwaStatus").textContent=window.matchMedia("(display-mode: standalone)").matches?"Aplicació instal·lada.":"Pots instal·lar-la com a PWA si el navegador ho permet."}
 function saveConfig(){state.horesAnuals=Number(document.getElementById("cfgHours").value)||0;state.vacancesTotals=Number(document.getElementById("cfgVac").value)||0;state.assumptesTotals=Number(document.getElementById("cfgPers").value)||0;state.blausTotals=Number(document.getElementById("cfgBlue").value)||0;state.gnpTotals=Number(document.getElementById("cfgGnp").value)||0;state.gnitTotals=Number(document.getElementById("cfgGnit").value)||0;state.acumTotals=Number(document.getElementById("cfgAccum").value)||0;state.titol=document.getElementById("cfgTitle").value.trim()||"Registre Horari";state.subtitol=document.getElementById("cfgSubtitle").value.trim();save();renderAll();toast("Configuració desada")}
-function editShift(i){const s=state.torns[i];const nom=prompt("Nom del torn",s.nom);if(nom===null)return;const inici=prompt("Entrada HH:MM",s.inici);if(inici===null)return;const fi=prompt("Sortida HH:MM",s.fi);if(fi===null)return;const hores=Number(prompt("Hores de referència",s.hores));if(!Number.isFinite(hores))return;s.nom=nom.trim()||s.nom;s.inici=inici;s.fi=fi;s.hores=hores;save();renderAll();toast("Torn actualitzat")}
+function editShift(i){
+ const s=state.torns[i];if(!s)return;
+ const action=prompt("Escriu EDITAR per modificar el torn o ELIMINAR per eliminar-lo.","EDITAR");
+ if(action===null)return;
+ if(action.trim().toUpperCase()==="ELIMINAR"){
+  const used=Object.values(state.registres).filter(r=>r?.tipus==="treball"&&r.torn===s.id).length;
+  if(used){
+   alert("No es pot eliminar aquest torn perquè hi ha "+used+" registre(s) que l'utilitzen. Canvia primer aquests registres a un altre torn.");
+   return;
+  }
+  if(!confirm("Eliminar el torn «"+s.nom+"»? Aquesta acció no es pot desfer."))return;
+  state.torns.splice(i,1);save();renderAll();toast("Torn eliminat");return;
+ }
+ if(action.trim().toUpperCase()!=="EDITAR"){toast("Acció no reconeguda");return}
+ const nom=prompt("Nom del torn",s.nom);if(nom===null)return;
+ const inici=prompt("Entrada HH:MM",s.inici);if(inici===null)return;
+ const fi=prompt("Sortida HH:MM",s.fi);if(fi===null)return;
+ const hores=Number(prompt("Hores de referència",s.hores));if(!Number.isFinite(hores))return;
+ s.nom=nom.trim()||s.nom;s.inici=inici;s.fi=fi;s.hores=hores;save();renderAll();toast("Torn actualitzat")
+}
 function setShiftColor(i,color){if(!state.torns[i])return;state.torns[i].color=color;save();renderAll();toast("Color del torn actualitzat")}
 function addShift(){const nom=prompt("Nom del nou torn","Nou torn");if(!nom)return;const color=prompt("Color del torn (HEX)","#93c5fd");if(!color)return;state.torns.push({id:"t_"+Date.now(),nom,abbr:nom.slice(0,4),hores:7.5,inici:"07:00",fi:"14:30",color:/^#[0-9a-fA-F]{6}$/.test(color.trim())?color.trim():"#93c5fd"});save();renderAll();toast("Torn afegit")}
 
