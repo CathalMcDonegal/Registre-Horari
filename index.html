@@ -263,6 +263,14 @@ html.dark .toast{background:#1e293b}
   .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
 }
 
+
+.stat.clickable{cursor:pointer;transition:transform .12s,box-shadow .12s}
+.stat.clickable:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(37,99,235,.12)}
+.stat.clickable:active{transform:translateY(0)}
+.detail-list{display:flex;flex-direction:column;gap:8px;max-height:60dvh;overflow:auto}
+.detail-list .row{cursor:pointer}
+.detail-summary{font-size:.8rem;color:var(--muted);margin-bottom:10px}
+
 </style>
 </head>
 <body>
@@ -424,25 +432,33 @@ html.dark .toast{background:#1e293b}
 <div class="form-actions"><button class="btn primary" onclick="saveTrial()">Desar judici</button><button class="btn secondary" onclick="closeModal('trialModal')">Cancel·lar</button><button class="btn danger" id="deleteTrialBtn" onclick="deleteTrial()">Esborrar</button></div>
 </div></div>
 
+
+<div class="modal-bg" id="detailModal"><div class="modal">
+<div class="modal-head"><h2 id="detailTitle">Detall</h2><button class="close" onclick="closeModal('detailModal')">×</button></div>
+<div class="detail-summary" id="detailSummary"></div>
+<div class="detail-list" id="detailList"></div>
+<div class="form-actions" style="margin-top:12px"><button class="btn secondary" onclick="closeModal('detailModal')" style="grid-column:1/-1">Tancar</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept="application/json" hidden>
 
 <script>
-// Registre Horari 2.1 – TIP configurable, mode fosc manual, recordatoris, export PDF, feedback millorat
+// Registre Horari 2.2 – Càlculs Mossos (nits 22-06, dies blaus→general, matí 8h+0.5 acum) + detall per categoria
 const KEY="registreHorariMossos";
 const MONTHS=["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
 const DOW=["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
 const TYPE_NAMES={treball:"Treball",vacances:"Vacances",assumptes:"Assumptes personals",dies_blaus:"Dies Blaus",baixa:"Baixa",guardia_np:"Guàrdia No Presencial",hores_acum:"Hores acumulades",hores_extres:"Hores extres",altres:"Permís per hores",altres_general:"Altres"};
 const TYPE_COLORS={vacances:"#bbf7d0",assumptes:"#22c55e",dies_blaus:"#16a34a",baixa:"#fffafa",guardia_np:"#86efac",hores_acum:"#4ade80",hores_extres:"#fde047",altres:"#86efac",altres_general:"#fdba74"};
 const DEFAULT_SHIFTS=[
-{id:"mati",nom:"Matí",abbr:"M",hores:7.5,inici:"07:00",fi:"14:30",color:"#f4d35e"},
+{id:"mati",nom:"Matí",abbr:"M",hores:7.5,inici:"07:00",fi:"15:00",color:"#f4d35e"},
 {id:"tarda",nom:"Tarda",abbr:"T",hores:7.5,inici:"14:30",fi:"22:00",color:"#f59e0b"},
 {id:"nit",nom:"Nit",abbr:"N",hores:9,inici:"22:00",fi:"07:00",color:"#60a5fa"},
 {id:"cs_dia",nom:"Cap de setmana Dia",abbr:"Dia 12h",hores:12,inici:"07:00",fi:"19:00",color:"#fffdf0"},
 {id:"cs_nit",nom:"Cap de setmana Nit",abbr:"Nit 12h",hores:12,inici:"19:00",fi:"07:00",color:"#6366f1"},
 {id:"fd",nom:"Festiu Dia",abbr:"FD 12h",hores:12,inici:"07:00",fi:"19:00",color:"#fffaf0"},
 {id:"fn",nom:"Festiu Nit",abbr:"FN 12h",hores:12,inici:"19:00",fi:"07:00",color:"#312e81"},
-{id:"festa",nom:"Festa",abbr:"Festa",hores:7.5,inici:"07:00",fi:"14:30",color:"#4ade80"}
+{id:"festa",nom:"Festa",abbr:"Festa",hores:7.5,inici:"07:00",fi:"15:00",color:"#4ade80"}
 ];
 const DEFAULT_HOLIDAYS={"2026-01-01":"Cap d'Any","2026-01-06":"Reis","2026-04-03":"Divendres Sant","2026-04-06":"Dilluns de Pasqua","2026-05-01":"Festa del Treball","2026-06-24":"Sant Joan","2026-08-15":"Assumpció","2026-09-11":"Diada Nacional CAT","2026-09-24":"La Mercè","2026-10-12":"Dia Nacional Espanya","2026-12-08":"Immaculada","2026-12-25":"Nadal","2026-12-26":"Sant Esteve","2027-01-01":"Cap d'Any","2027-01-06":"Reis"};
 
@@ -463,6 +479,42 @@ function getShift(id){return state.torns.find(t=>t.id===id)||state.torns[0]}
 function isNightShift(s){const n=(s?.nom||"").toLowerCase();return ["nit","cs_nit","fn"].includes(s?.id)||n.includes("nit")}
 function isMorning(s){return s?.id==="mati"||(s?.nom||"").toLowerCase().includes("matí")||(s?.nom||"").toLowerCase().includes("mati")}
 function defaultShiftHours(s){return isMorning(s)?8:Number(s?.hores)||7.5}
+/* Minuts des de 00:00; torns que passen de mitjanit: fi < inici */
+function timeToMin(t){if(!t||!/^\d{1,2}:\d{2}$/.test(t))return null;const[h,m]=t.split(":").map(Number);return h*60+m}
+/** Hores de nit estrictes: solapament amb [22:00, 06:00] (8 h de finestra, creua mitjanit). */
+function nightHoursInRange(startStr,endStr){
+  let a=timeToMin(startStr),b=timeToMin(endStr);
+  if(a===null||b===null)return 0;
+  if(b<=a)b+=24*60; // creua mitjanit
+  // Finestra nit: 22:00 dia0 → 06:00 dia1 (= 30*60)
+  const winA=22*60, winB=30*60;
+  const lo=Math.max(a,winA), hi=Math.min(b,winB);
+  const mins=Math.max(0,hi-lo);
+  // També si el torn comença després de mitjanit dins 00:00-06:00 (a ja normalitzat 0-24h sense +24)
+  // Cobrim cas entrada 00:xx-06:xx sense haver posat 22h
+  let mins2=0;
+  if(a<6*60 && b>a && a<22*60){
+    const lo2=Math.max(a,0), hi2=Math.min(b,6*60);
+    mins2=Math.max(0,hi2-lo2);
+  }
+  // Evitar doble comptatge: si ja hem capturat via +24, mins2 sol ser 0
+  const total=mins>0?mins:mins2;
+  return num(total/60);
+}
+function nightHoursForRecord(r,s){
+  const start=r.entrada||s?.inici||"";
+  const end=r.sortida||s?.fi||"";
+  let nh=nightHoursInRange(start,end);
+  // Si no hi ha hores calculables però és torn de nit conegut, usar taula estàndard
+  if(nh<=0 && isNightShift(s)){
+    if(s.id==="nit") nh=8;          // 22-07 → 22-06 = 8h nit
+    else if(s.id==="cs_nit"||s.id==="fn") nh=8; // 19-07 → 22-06 = 8h nit
+    else nh=8;
+  }
+  // No superar les hores totals del registre
+  const hr=Number(r.hores)||defaultShiftHours(s);
+  return num(Math.min(nh,hr));
+}
 function holiday(d){return !!state.festius[key(d)]}
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
@@ -555,17 +607,48 @@ function selectYear(v){setActiveYear(v)}
 function changeYear(delta){setActiveYear(state.anyInici+delta)}
 
 function calc(){
+ /* Regles Mossos (1580 h efectives):
+    - Vacances: només bo vacances (NO còmput general)
+    - Assumptes: bo AP + còmput general
+    - Dies Blaus: bo blaus + còmput general
+    - Hores acumulades (ús): només bo acumulades
+    - GNP: només bo GNP
+    - Baixa: còmput general
+    - Extres: només comptador extres
+    - Treball: còmput general; matí marc 7.5 → 8h general + 0.5 acumulades;
+      nits: al bo de nits NOMÉS hores 22:00–06:00; la resta del torn va només al general
+    - Torn festa: resta del còmput general
+ */
  let worked=0,accExtra=0,vac=0,pers=0,blue=0,gnp=0,gnit=0,extra=0,accUsed=0;
  for(const r of Object.values(state.registres)){
   if(!r?.tipus)continue;
-  if(r.tipus==="treball"){const s=getShift(r.torn),hp=isMorning(s)?7.5:Number(s?.hores)||0;let hr=Number(r.hores);if(!Number.isFinite(hr)||hr===0)hr=defaultShiftHours(s);if(isMorning(s)&&hr<=7.5)hr=8;if(r.torn==="festa")worked-=hr;else{worked+=hr;if(hr>hp)accExtra+=hr-hp;if(isNightShift(s))gnit+=hr}}
-  else if(r.tipus==="vacances")vac+=Number(r.horesConcepte)||0;
-  else if(r.tipus==="dies_blaus")blue+=Number(r.horesConcepte)||0;
+  if(r.tipus==="treball"){
+    const s=getShift(r.torn);
+    const hp=isMorning(s)?7.5:Number(s?.hores)||0;
+    let hr=Number(r.hores);
+    if(!Number.isFinite(hr)||hr===0) hr=defaultShiftHours(s);
+    // Matí: sempre 8 h al general i +0.5 a acumulades respecte al marc de 7.5
+    if(isMorning(s)){
+      if(hr<=7.5) hr=8;
+      const over=Math.max(0,hr-7.5);
+      if(r.torn==="festa"){worked-=hr}
+      else{worked+=hr;accExtra+=over}
+    } else if(r.torn==="festa"){
+      worked-=hr;
+    } else {
+      worked+=hr;
+      if(hr>hp) accExtra+=hr-hp;
+      // Nits: només franja 22h–06h
+      if(isNightShift(s)) gnit+=nightHoursForRecord(r,s);
+    }
+  }
+  else if(r.tipus==="vacances"){vac+=Number(r.horesConcepte)||0}
+  else if(r.tipus==="dies_blaus"){const h=Number(r.horesConcepte)||0;blue+=h;worked+=h}
   else if(r.tipus==="assumptes"){const h=Number(r.horesConcepte)||0;pers+=h;worked+=h}
-  else if(r.tipus==="baixa")worked+=Number(r.horesConcepte)||0;
-  else if(r.tipus==="guardia_np")gnp+=Number(r.horesConcepte)||0;
-  else if(r.tipus==="hores_acum")accUsed+=Number(r.horesConcepte)||7.5;
-  else if(r.tipus==="hores_extres")extra+=Number(r.horesConcepte)||0;
+  else if(r.tipus==="baixa"){worked+=Number(r.horesConcepte)||0}
+  else if(r.tipus==="guardia_np"){gnp+=Number(r.horesConcepte)||0}
+  else if(r.tipus==="hores_acum"){accUsed+=Number(r.horesConcepte)||7.5}
+  else if(r.tipus==="hores_extres"){extra+=Number(r.horesConcepte)||0}
  }
  return {worked:num(worked),remaining:num(state.horesAnuals-worked),saldo:num(worked-expectedToDate()),expected:num(expectedToDate()),progress:state.horesAnuals?Math.max(0,Math.min(100,worked/state.horesAnuals*100)):0,accum:num((state.acumTotals||0)+accExtra-accUsed),vac:num(vac),pers:num(pers),blue:num(blue),gnp:num(gnp),gnit:num(gnit),extra:num(extra),accExtra:num(accExtra),accUsed:num(accUsed)}
 }
@@ -593,8 +676,17 @@ function renderHome(){
  const d=parseKey(todayKey()),r=state.registres[todayKey()],box=document.getElementById("todayCard");
  if(r){const s=r.tipus==="treball"?getShift(r.torn):null;box.innerHTML=`<div class="card-title">Avui · ${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</div><div class="today"><div class="today-date"><b>${d.getDate()}</b><span>${MONTHS[d.getMonth()].slice(0,3)}</span></div><div class="today-main"><b>${escapeHtml(r.tipus==="treball"?(s?.nom||"Treball"):TYPE_NAMES[r.tipus]||r.tipus)}</b><small>${r.tipus==="treball"?`${r.entrada||s?.inici||""} → ${r.sortida||s?.fi||""} · ${plainHours(r.hores||0)} h`:(plainHours(r.horesConcepte||0)+" h")}</small></div><button class="btn secondary small" onclick="openDay('${todayKey()}')">Editar</button></div>`}
  else box.innerHTML=`<div class="card-title">Avui · ${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}</div><div class="today"><div class="today-date"><b>${d.getDate()}</b><span>${MONTHS[d.getMonth()].slice(0,3)}</span></div><div class="today-main"><b>Encara sense registre</b><small>${holiday(d)?"Avui és festiu · ":""}Prepara la jornada en segons.</small></div><button class="btn primary small" onclick="openDay('${todayKey()}')">Registrar</button></div>`;
- const qs=[["green",fmtHours(c.accum),"Acumulades"],["purple",plainHours(state.vacancesTotals-c.vac)+" h","Vacances restants"],["cyan",plainHours(state.assumptesTotals-c.pers)+" h","Assumptes restants"],["blue",plainHours(c.gnp)+" h","GNP fetes"],["pink",plainHours(c.gnit)+" h","Nits"],["orange",plainHours(c.extra)+" h","Extres"],["green",plainHours(Math.max(0,(state.blausTotals||0)-c.blue))+" h","Dies Blaus"],["purple",String(state.judicis.filter(j=>!j.celebrat).length),"Judicis pendents"]];
- document.getElementById("quickStats").innerHTML=qs.map(x=>`<div class="stat ${x[0]}"><b>${x[1]}</b><span>${x[2]}</span></div>`).join("");
+ const qs=[
+  ["green",fmtHours(c.accum),"Acumulades","accum"],
+  ["purple",plainHours(state.vacancesTotals-c.vac)+" h","Vacances restants","vacances"],
+  ["cyan",plainHours(state.assumptesTotals-c.pers)+" h","Assumptes restants","assumptes"],
+  ["blue",plainHours(c.gnp)+" h","GNP fetes","gnp"],
+  ["pink",plainHours(c.gnit)+" h","Nits","nits"],
+  ["orange",plainHours(c.extra)+" h","Extres","extres"],
+  ["green",plainHours(Math.max(0,(state.blausTotals||0)-c.blue))+" h","Dies Blaus","dies_blaus"],
+  ["purple",String(state.judicis.filter(j=>!j.celebrat).length),"Judicis pendents","judicis"]
+ ];
+ document.getElementById("quickStats").innerHTML=qs.map(x=>`<div class="stat ${x[0]} clickable" role="button" tabindex="0" onclick="openDetail('${x[3]}')" onkeydown="if(event.key==='Enter')openDetail('${x[3]}')"><b>${x[1]}</b><span>${x[2]}</span></div>`).join("");
  const today=todayKey();
  const upcomingTrials=state.judicis.map((j,i)=>({...j,i})).filter(j=>j.data&&j.data>=today&&!j.celebrat).sort((a,b)=>(a.data+(a.hora||"")).localeCompare(b.data+(b.hora||""))).slice(0,5);
  const upcomingIcons=[];
@@ -761,6 +853,72 @@ function toast(msg,type){const t=document.getElementById("toast");if(!t)return;t
 
 
 /* ——— Tema, notificacions i PDF (2.1) ——— */
+
+function openDetail(kind){
+  const titles={accum:"Hores acumulades",vacances:"Vacances",assumptes:"Assumptes personals",gnp:"GNP (Guàrdia No Presencial)",nits:"Nits (22:00–06:00)",extres:"Hores extres",dies_blaus:"Dies Blaus",judicis:"Judicis pendents"};
+  const c=calc();
+  const items=[];
+  if(kind==="judicis"){
+    state.judicis.forEach((j,i)=>{
+      if(!j.celebrat) items.push({i,label:j.data||"Sense data",sub:`${j.jutjat||"Judici"} · ${j.hora||""} · ${j.procediment||""}`,hoursLabel:""});
+    });
+  } else {
+    Object.entries(state.registres).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,r])=>{
+      if(!r?.tipus) return;
+      let hours=null, sub="";
+      if(kind==="vacances" && r.tipus==="vacances"){hours=Number(r.horesConcepte)||0;sub="Vacances"}
+      else if(kind==="assumptes" && r.tipus==="assumptes"){hours=Number(r.horesConcepte)||0;sub="Assumptes personals"}
+      else if(kind==="dies_blaus" && r.tipus==="dies_blaus"){hours=Number(r.horesConcepte)||0;sub="Dies Blaus · còmput general"}
+      else if(kind==="gnp" && r.tipus==="guardia_np"){hours=Number(r.horesConcepte)||0;sub="GNP"}
+      else if(kind==="extres" && r.tipus==="hores_extres"){hours=Number(r.horesConcepte)||0;sub="Extres"}
+      else if(kind==="accum"){
+        if(r.tipus==="hores_acum"){hours=-(Number(r.horesConcepte)||7.5);sub="Ús d'acumulades"}
+        else if(r.tipus==="treball" && r.torn!=="festa"){
+          const s=getShift(r.torn);
+          let hr=Number(r.hores); if(!Number.isFinite(hr)||hr===0) hr=defaultShiftHours(s);
+          if(isMorning(s) && hr<=7.5) hr=8;
+          const over=isMorning(s)?Math.max(0,hr-7.5):Math.max(0,hr-(Number(s?.hores)||0));
+          if(over>0){hours=over;sub=`Generades · ${s?.nom||"Treball"}`}
+        }
+      } else if(kind==="nits" && r.tipus==="treball"){
+        const s=getShift(r.torn);
+        if(isNightShift(s)){
+          const nh=nightHoursForRecord(r,s);
+          if(nh>0){hours=nh;sub=`${s?.nom||"Nit"} · ${r.entrada||s?.inici||"?"} → ${r.sortida||s?.fi||"?"} · torn ${plainHours(Number(r.hores)||defaultShiftHours(s))} h`}
+        }
+      }
+      if(hours!==null){
+        const d=parseKey(k);
+        items.push({k,label:`${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`,sub,hours});
+      }
+    });
+  }
+  const filtered = kind==="accum" ? items.filter(it=>Math.abs(it.hours)>=0.25) : items;
+  let summary="";
+  if(kind==="vacances") summary=`Usades: ${plainHours(c.vac)} h · Restants: ${plainHours(state.vacancesTotals-c.vac)} h · ${filtered.length} dia(es)`;
+  else if(kind==="assumptes") summary=`Usats: ${plainHours(c.pers)} h · Restants: ${plainHours(state.assumptesTotals-c.pers)} h · ${filtered.length} dia(es) · (també descompten del còmput general)`;
+  else if(kind==="dies_blaus") summary=`Usats: ${plainHours(c.blue)} h · Restants: ${plainHours(Math.max(0,(state.blausTotals||0)-c.blue))} h · ${filtered.length} dia(es) · (també descompten del còmput general)`;
+  else if(kind==="gnp") summary=`GNP fetes: ${plainHours(c.gnp)} h · ${filtered.length} dia(es) · (no afecten el còmput general)`;
+  else if(kind==="nits") summary=`Hores de nit 22:00–06:00: ${plainHours(c.gnit)} h · ${filtered.length} dia(es) · (el torn sencer va al còmput general)`;
+  else if(kind==="extres") summary=`Extres: ${plainHours(c.extra)} h · ${filtered.length} dia(es)`;
+  else if(kind==="accum") summary=`Saldo: ${fmtHours(c.accum)} · Generades: ${plainHours(c.accExtra)} h · Usades: ${plainHours(c.accUsed)} h · ${filtered.length} moviment(s)`;
+  else if(kind==="judicis") summary=`${filtered.length} judici(s) pendent(s)`;
+  document.getElementById("detailTitle").textContent=titles[kind]||"Detall";
+  document.getElementById("detailSummary").textContent=summary;
+  const list=document.getElementById("detailList");
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty">No hi ha registres en aquesta categoria${kind==="nits"?" (encara)":""}.</div>`;
+  } else if(kind==="judicis"){
+    list.innerHTML=filtered.map(it=>`<div class="row" onclick="closeModal('detailModal');openTrial(${it.i})"><div class="grow"><strong>${escapeHtml(it.label)}</strong><small>${escapeHtml(it.sub)}</small></div></div>`).join("");
+  } else {
+    list.innerHTML=filtered.map(it=>{
+      const chip=it.hours<0?`<span class="chip warn">${fmtHours(it.hours)}</span>`:`<span class="chip info">${plainHours(it.hours)} h</span>`;
+      return `<div class="row" onclick="closeModal('detailModal');openDay('${it.k}')"><div class="grow"><strong>${escapeHtml(it.label)}</strong><small>${escapeHtml(it.sub)}</small></div>${chip}</div>`;
+    }).join("");
+  }
+  openModal("detailModal");
+}
+
 function applyTheme(){
   const mode=state.darkMode||"auto";
   const root=document.documentElement;

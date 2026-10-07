@@ -1,27 +1,16 @@
-# Registre Horari 2.1 (millores completes)
+# Registre Horari 2.2
 
-Versió millorada sobre la 2.0 original de CathalMcDonegal.
+Càlculs alineats amb el règim de 1580 h efectives dels Mossos d'Esquadra.
 
-## Novetats
+## Regles de còmput
+- **Còmput general (1580 h):** treball + assumptes + dies blaus + baixa − torn festa. Vacances i GNP **no** hi entren.
+- **Matí:** 8 h al general + 0,5 h a acumulades (marc 7,5 h, jornada 07:00–15:00).
+- **Nits:** al bo de nits només les hores **22:00–06:00**; la resta del torn (19–22, 06–07) només al general.
+- **Vacances / GNP / ús d'acumulades / extres:** només el seu bo o comptador.
+- **Assumptes i Dies Blaus:** el seu bo **i** el còmput general.
 
-### Ja a la 2.1 anterior
-- **TIP configurable** (marca d'aigua des de Configuració)
-- Missatge amable al còmput quan encara no hi ha hores registrades
-
-### Noves en aquesta versió
-- **Mode fosc manual**: Auto (sistema) / Clar / Fosc
-- **Recordatori diari**: notificació si a les 18 h encara no has registrat (cal permís del navegador)
-- **Exportar PDF / Imprimir**: resum anual + taula de registres (obre finestra i imprimeix / desa com a PDF)
-- **Feedback millorat**: toasts amb estil d'èxit i missatges més clars en desar jornades
+## Detall
+Clic a qualsevol targeta del resum ràpid (Nits, AP, Vacances, GNP, Acumulades, Dies Blaus, Extres, Judicis) per veure el llistat de dies.
 
 ## Instal·lació
-1. Descarrega i descomprimeix el ZIP.
-2. Puja `index.html`, `manifest.json` i `sw.js` al repositori de GitHub.
-3. Mantén la carpeta `icons/`.
-4. GitHub Pages publicarà la nova versió.
-
-Les dades (`localStorage` clau `registreHorariMossos`) es conserven i són compatibles amb la versió anterior.
-
-## Notes
-- Les notificacions només funcionen amb permís del navegador i mentre l'app està oberta o en segon pla segons el SO.
-- L'export PDF utilitza la impressió del navegador («Desar com a PDF»).
+Puja `index.html`, `manifest.json` i `sw.js` al repositori GitHub Pages. Mantén `icons/`.
