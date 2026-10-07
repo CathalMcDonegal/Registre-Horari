@@ -1,17 +1,41 @@
 {
+  "id": "/Registre-Horari/",
   "name": "Registre Horari",
   "short_name": "Registre Horari",
-  "start_url": ".",
+  "description": "Registre horari personal per a Mossos d'Esquadra. 1580 h, vacances, nits, GNP i més. Dades només al dispositiu.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#f4f7fb",
   "theme_color": "#0f172a",
   "lang": "ca",
-  "description": "Registre horari personal",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
       "src": "icons/app-icon.png",
       "sizes": "64x64",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
