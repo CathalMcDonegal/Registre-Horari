@@ -271,6 +271,24 @@ html.dark .toast{background:#1e293b}
 .detail-list .row{cursor:pointer}
 .detail-summary{font-size:.8rem;color:var(--muted);margin-bottom:10px}
 
+
+/* Manual d'ús (acordió) */
+.manual details{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#f8fafc;overflow:hidden}
+.manual details[open]{background:var(--card)}
+.manual summary{cursor:pointer;padding:12px 14px;font-weight:800;font-size:.84rem;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none}
+.manual summary::-webkit-details-marker{display:none}
+.manual summary::after{content:"›";font-size:1.2rem;color:var(--muted);transition:transform .15s}
+.manual details[open] summary::after{transform:rotate(90deg)}
+.manual .manual-body{padding:0 14px 14px;font-size:.8rem;color:var(--text);line-height:1.45}
+.manual .manual-body p{margin:0 0 8px}
+.manual .manual-body ul{margin:0 0 8px;padding-left:1.2em}
+.manual .manual-body li{margin-bottom:4px}
+.manual .manual-body strong{font-weight:800}
+.manual .tag{display:inline-block;font-size:.65rem;font-weight:800;padding:2px 7px;border-radius:999px;background:#e0e7ff;color:#3730a3;margin-right:4px}
+html.dark .manual details{background:#0f192a;border-color:var(--line)}
+html.dark .manual details[open]{background:var(--card)}
+html.dark .manual .tag{background:#172554;color:#93c5fd}
+
 </style>
 </head>
 <body>
@@ -348,6 +366,142 @@ html.dark .toast{background:#1e293b}
     <p class="hint" style="margin-top:10px">La importació reconeix el format de la versió anterior. Abans de substituir dades es crea una còpia local de seguretat.</p>
     <button class="btn danger" onclick="resetAll()">Esborrar dades</button>
   </div>
+
+  <div class="card"><div class="card-title">Manual d'ús</div>
+    <p class="hint" style="margin-top:-4px;margin-bottom:12px">Guia per apartats. Toca un títol per desplegar-lo.</p>
+    <div class="manual">
+
+      <details>
+        <summary>1. Què és aquesta app</summary>
+        <div class="manual-body">
+          <p>Registre personal d’hores per a personal dels Mossos d’Esquadra. Les dades es guarden <strong>només al teu dispositiu</strong> (no hi ha servidor ni compte).</p>
+          <p>Està pensada per al règim de <strong>1580 hores efectives</strong> anuals, amb vacances, assumptes, nits, GNP, dies blaus, etc.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>2. Pantalla d’inici</summary>
+        <div class="manual-body">
+          <ul>
+            <li><strong>Còmput anual:</strong> hores fetes respecte a les 1580 h i el ritme esperat fins avui (1 feb – 31 gen).</li>
+            <li><strong>Avui:</strong> registra o edita la jornada del dia.</li>
+            <li><strong>Resum ràpid:</strong> toca cada targeta (Nits, Vacances, AP…) per veure el <strong>llistat de dies</strong> d’aquella categoria.</li>
+            <li><strong>＋ Registrar:</strong> botó flotant per registrar el dia actual.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>3. Com registrar un dia</summary>
+        <div class="manual-body">
+          <p>1. Toca el dia al calendari, a la setmana, o «Registrar».<br>
+          2. Tria el <strong>tipus</strong> (Treball, Vacances, Assumptes…).<br>
+          3. Si és treball: tria el <strong>torn</strong>, entrada/sortida i hores.<br>
+          4. Pots afegir icona i notes.<br>
+          5. Desa.</p>
+          <p>Amb <strong>selecció múltiple</strong> (calendari o setmana) pots aplicar el mateix tipus a diversos dies de cop.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>4. Còmput general (1580 h)</summary>
+        <div class="manual-body">
+          <p>Són les <strong>hores efectives</strong>. Hi entren:</p>
+          <ul>
+            <li><span class="tag">Suma</span> Treball (hores del torn)</li>
+            <li><span class="tag">Suma</span> Assumptes personals</li>
+            <li><span class="tag">Suma</span> Dies Blaus</li>
+            <li><span class="tag">Suma</span> Baixa</li>
+            <li><span class="tag">Resta</span> Torn «Festa»</li>
+          </ul>
+          <p><strong>No</strong> hi entren: vacances, GNP, ús d’hores acumulades ni hores extres (només els seus comptadors).</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>5. Torn de matí</summary>
+        <div class="manual-body">
+          <p>El marc és de <strong>7,5 h</strong>, però la jornada habitual és <strong>07:00–15:00 (8 h)</strong>.</p>
+          <ul>
+            <li>Al còmput general es descompten <strong>8 h</strong>.</li>
+            <li>Als acumulats s’afegeixen <strong>0,5 h</strong> (diferència respecte al marc).</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>6. Nits (22:00 – 06:00)</summary>
+        <div class="manual-body">
+          <p>Torns de nit típics: laborable 22:00–07:00; cap de setmana i festiu 19:00–07:00.</p>
+          <p>Al <strong>bo de nits</strong> només compten les hores entre <strong>22:00 i 06:00</strong>.</p>
+          <p>La resta del torn (19:00–22:00 i 06:00–07:00) va <strong>només al còmput general</strong>, no al de nits.</p>
+          <p>Exemple nit 22–07 (9 h): general +9 h · nits +8 h.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>7. Vacances, AP, Dies Blaus, GNP…</summary>
+        <div class="manual-body">
+          <ul>
+            <li><strong>Vacances:</strong> només resten del bo de vacances (no del general).</li>
+            <li><strong>Assumptes personals:</strong> resten del bo d’AP <em>i</em> del còmput general.</li>
+            <li><strong>Dies Blaus:</strong> resten del bo de blaus <em>i</em> del còmput general.</li>
+            <li><strong>GNP:</strong> només del bo GNP.</li>
+            <li><strong>Hores acumulades (ús):</strong> només del bo d’acumulades.</li>
+            <li><strong>Hores extres:</strong> només comptador d’extres.</li>
+          </ul>
+          <p>Els totals inicials es configuren a <strong>Configuració</strong>.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>8. Acumulades</summary>
+        <div class="manual-body">
+          <p><strong>Saldo</strong> = acumulades inicials + generades − usades.</p>
+          <ul>
+            <li><strong>Generades:</strong> sobrant respecte al marc del torn (p.ex. matí +0,5 h).</li>
+            <li><strong>Usades:</strong> dies registrats com a «Hores acumulades».</li>
+          </ul>
+          <p>Toca la targeta «Acumulades» a l’inici per veure cada moviment.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>9. Calendari, setmana i judicis</summary>
+        <div class="manual-body">
+          <ul>
+            <li><strong>Calendari:</strong> vista mensual; colors segons el tipus de dia.</li>
+            <li><strong>Setmana:</strong> llista de la setmana amb total d’hores i ritme restant.</li>
+            <li><strong>Judicis:</strong> agenda pròpia (no afecta les hores).</li>
+          </ul>
+        </div>
+      </details>
+
+      <details>
+        <summary>10. Dades, còpies i PDF</summary>
+        <div class="manual-body">
+          <ul>
+            <li><strong>Exportar JSON:</strong> còpia completa (recomanat abans de canviar de mòbil).</li>
+            <li><strong>Importar JSON:</strong> restaura una còpia; es crea backup automàtic abans.</li>
+            <li><strong>CSV / PDF:</strong> per consultar o arxivar fora de l’app.</li>
+          </ul>
+          <p>Si neteges les dades del navegador, es perden els registres locals. Exporta de tant en tant.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>11. Mode fosc i recordatori</summary>
+        <div class="manual-body">
+          <ul>
+            <li><strong>Mode fosc:</strong> Auto (sistema), Clar o Fosc.</li>
+            <li><strong>Recordatori diari:</strong> si l’actives i dona permís el navegador, et pot avisar si a la tarda encara no has registrat el dia.</li>
+          </ul>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
   <div class="card"><div class="card-title">PWA</div><div id="pwaStatus" class="hint">Preparant…</div><button class="btn secondary" onclick="installApp()" id="installBtn" style="display:none">Instal·lar aplicació</button></div>
 </section>
 </main>
@@ -444,7 +598,7 @@ html.dark .toast{background:#1e293b}
 <input type="file" id="fileInput" accept="application/json" hidden>
 
 <script>
-// Registre Horari 2.2 – Càlculs Mossos (nits 22-06, dies blaus→general, matí 8h+0.5 acum) + detall per categoria
+// Registre Horari 2.2 – Càlculs Mossos + detall + manual d'ús a Més
 const KEY="registreHorariMossos";
 const MONTHS=["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
 const DOW=["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
