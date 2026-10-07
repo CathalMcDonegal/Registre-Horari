@@ -756,39 +756,38 @@ function migrate(raw){
 }
 function recordColor(r){if(!r?.tipus)return "";if(r.tipus==="treball"){const s=getShift(r.torn);return s?.color||""}return TYPE_COLORS[r.tipus]||""}
 function recordStyle(r){const color=recordColor(r);return color?"style=\"--record-color:"+escapeHtml(color)+"\"":""}
-function recoverLocalData(){
+function recoverLocalData(forceEmpty){
+  // Només recupera si no hi ha estat principal vàlid (pèrdua real de dades).
+  // No torna a injectar registres quan l'usuari ha esborrat tot expressament.
+  if(!forceEmpty) return false;
+  const skipSuffixes=[".backup-","Backup-","installDismissed","lastNotify","unlock",".latest"];
   const candidates=[];
   for(let i=0;i<localStorage.length;i++){
     const k=localStorage.key(i);
     if(!k||k===KEY)continue;
-    if(!k.startsWith(KEY))continue;
+    if(!k.startsWith(KEY) && !k.startsWith("registreHorari"))continue;
+    if(skipSuffixes.some(s=>k.includes(s)))continue;
     try{
       const raw=JSON.parse(localStorage.getItem(k));
       if(!raw||typeof raw!=="object")continue;
-      const score=(raw.registres&&typeof raw.registres==="object"?Object.keys(raw.registres).length:0)+(Array.isArray(raw.judicis)?raw.judicis.length:0)+(raw.historic&&typeof raw.historic==="object"?Object.keys(raw.historic).length*2:0);
-      if(score>0)candidates.push({data:raw,score});
+      if(!raw.registres && !raw.judicis)continue;
+      const score=(raw.registres&&typeof raw.registres==="object"?Object.keys(raw.registres).length:0)+(Array.isArray(raw.judicis)?raw.judicis.length:0);
+      if(score>0)candidates.push({data:raw,score,key:k});
     }catch(e){}
   }
   if(!candidates.length)return false;
   candidates.sort((a,b)=>b.score-a.score);
   const before=JSON.stringify(state);
   let changed=false;
-  for(const candidate of candidates.slice(0,8)){
-    const legacy=migrate(candidate.data);
-    for(const [k,r] of Object.entries(legacy.registres||{})){
-      if(!state.registres[k]){state.registres[k]=clone(r);changed=true}
-    }
-    const existingJud=new Set((state.judicis||[]).map(j=>JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment])));
-    for(const j of legacy.judicis||[]){
-      const sig=JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment]);
-      if(!existingJud.has(sig)){state.judicis.push(clone(j));existingJud.add(sig);changed=true}
-    }
-    if(legacy.historic&&typeof legacy.historic==="object"){
-      state.historic=state.historic||{};
-      for(const [year,snap] of Object.entries(legacy.historic)){
-        if(!state.historic[year]){state.historic[year]=clone(snap);changed=true}
-      }
-    }
+  const candidate=candidates[0];
+  const legacy=migrate(candidate.data);
+  for(const [k,r] of Object.entries(legacy.registres||{})){
+    if(!state.registres[k]){state.registres[k]=clone(r);changed=true}
+  }
+  const existingJud=new Set((state.judicis||[]).map(j=>JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment])));
+  for(const j of legacy.judicis||[]){
+    const sig=JSON.stringify([j.data,j.hora,j.jutjat,j.sala,j.procediment]);
+    if(!existingJud.has(sig)){state.judicis.push(clone(j));existingJud.add(sig);changed=true}
   }
   if(changed)localStorage.setItem(KEY,JSON.stringify(state));
   return changed && JSON.stringify(state)!==before;
@@ -797,10 +796,21 @@ function load(){
   let recovered=false;
   try{
     const main=localStorage.getItem(KEY), latest=localStorage.getItem(KEY+".latest");
-    const mainData=main?JSON.parse(main):null, latestData=latest?JSON.parse(latest):null;
-    const rawData=mainData&&latestData?(Number(latestData._savedAt)||0)>(Number(mainData._savedAt)||0)?latestData:mainData:(mainData||latestData);
-    if(rawData)state=migrate(rawData);else state=defaultState();
-    recovered=recoverLocalData();
+    let mainData=null, latestData=null;
+    try{ mainData=main?JSON.parse(main):null; }catch(e){ mainData=null; }
+    try{ latestData=latest?JSON.parse(latest):null; }catch(e){ latestData=null; }
+    // Prefereix sempre l'estat principal si existeix (respecta esborrats de l'usuari).
+    // .latest només com a fallback si main no existeix o està corrupte.
+    let rawData=mainData;
+    if(!rawData && latestData) rawData=latestData;
+    if(rawData){
+      state=migrate(rawData);
+      // Recuperació agressiva NOMÉS si no hi havia cap estat desat
+      recovered=false;
+    }else{
+      state=defaultState();
+      recovered=recoverLocalData(true);
+    }
   }catch(e){state=defaultState()}
   const now=new Date(); currentMonth=new Date(now.getFullYear(),now.getMonth(),1); weekAnchor=startOfWeek(now);
   ensureHistory(); renderAll();
@@ -1072,7 +1082,17 @@ function importJSON(){document.getElementById("fileInput").click()}
 document.getElementById("fileInput").addEventListener("change",e=>{const f=e.target.files?.[0];if(!f)return;const reader=new FileReader();reader.onload=()=>{try{const raw=JSON.parse(reader.result);localStorage.setItem(KEY+".backup-"+Date.now(),JSON.stringify(state));state=migrate(raw);save();renderAll();toast("Dades importades")}catch(err){alert("El fitxer no és un JSON vàlid.")}e.target.value=""};reader.readAsText(f)})
 function exportCSV(){const rows=[["Data","Tipus","Torn","Entrada","Sortida","Hores","Notes"]];Object.entries(state.registres).sort().forEach(([k,r])=>{const s=r.tipus==="treball"?getShift(r.torn):null;rows.push([k,TYPE_NAMES[r.tipus]||r.tipus,s?.nom||"",r.entrada||"",r.sortida||"",r.tipus==="treball"?r.hores||0:r.horesConcepte||0,(r.notes||"").replace(/"/g,'""')])});const csv="\ufeff"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(";")).join("\n");download(new Blob([csv],{type:"text/csv;charset=utf-8"}),`registre-horari-${state.anyInici}.csv`);toast("CSV exportat")}
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-function resetAll(){if(!confirm("Es creará una còpia local i després s'esborraran totes les dades. Continuar?"))return;localStorage.setItem(KEY+".backup-"+Date.now(),JSON.stringify(state));state=defaultState();save();renderAll();toast("Dades restablertes")}
+function resetAll(){
+  if(!confirm("Es crearà una còpia de seguretat i després s'esborraran totes les dades. Continuar?"))return;
+  // Còpia fora del prefix que es recupera automàticament
+  try{ localStorage.setItem("registreHorariBackup-"+Date.now(),JSON.stringify(state)); }catch(e){}
+  // Neteja també .latest perquè no reapareguin dades antigues
+  try{ localStorage.removeItem(KEY+".latest"); }catch(e){}
+  state=defaultState();
+  save();
+  renderAll();
+  toast("Dades restablertes");
+}
 function openModal(id){document.getElementById(id).classList.add("open")}function closeModal(id){document.getElementById(id).classList.remove("open");if(id==="dayModal")editingDay=null;if(id==="trialModal")editingTrial=null}
 function toast(msg,type){const t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.className="toast show"+(type?" "+type:"");clearTimeout(window.__toast);window.__toast=setTimeout(()=>{t.classList.remove("show")},type==="success"?2800:2200)}
 

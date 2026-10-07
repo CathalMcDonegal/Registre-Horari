@@ -1,4 +1,4 @@
-const CACHE='registre-horari-v50';
+const CACHE='registre-horari-v51';
 const APP_SHELL=['./','./index.html','./manifest.json'];
 
 self.addEventListener('install',event=>{
