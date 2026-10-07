@@ -223,6 +223,46 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 .watermark{position:fixed;inset:0;z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:clamp(2.8rem,9vw,8rem);font-weight:900;letter-spacing:.08em;color:rgba(37,99,235,.055);transform:rotate(-28deg);user-select:none;white-space:nowrap}
 @media(prefers-color-scheme:dark){.install-banner{background:rgba(15,32,58,.97);border-color:#31518a;color:#e8eef7}.install-banner small{color:#a9bad0}.watermark{color:rgba(147,197,253,.06)}}
 @media(max-width:600px){.install-banner{bottom:calc(78px + var(--safe));padding:9px}.watermark{font-size:clamp(2.4rem,12vw,5rem)}}
+
+/* Mode fosc manual + millores UX 2.1 */
+html.dark{
+  --bg:#0b1220;--card:#111b2d;--text:#e8eef7;--muted:#9aa9bd;--line:#293a52;
+  --primary-soft:#172554;--shadow:0 6px 22px rgba(0,0,0,.18);
+}
+html.dark body{background:var(--bg);color:var(--text)}
+html.dark .appbar,html.dark .nav{background:rgba(17,27,45,.96)}
+html.dark .card,html.dark .toolbar .btn,html.dark .month-head button,
+html.dark .monthly-row,html.dark .week-row,html.dark .row,html.dark .setting-row{background:var(--card)}
+html.dark .stats .stat,html.dark .empty{background:#0f192a}
+html.dark .search,html.dark input,html.dark select,html.dark textarea{background:#0f192a;border-color:#33465f;color:var(--text)}
+html.dark .btn.secondary{background:#1a2639;color:var(--text);border-color:#344963}
+html.dark .year-pill{background:#172554;border-color:#31518a}
+html.dark .nav button{color:#91a0b5}
+html.dark .nav button.active{background:#172554;color:#8db7ff}
+html.dark .watermark{color:rgba(147,197,253,.06)}
+html.dark .toast{background:#1e293b}
+.toast.success{background:#166534}
+.toast.warn{background:#9a3412}
+@keyframes pulseOk{0%{box-shadow:0 0 0 0 rgba(37,99,235,.45)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+.btn.pulse{animation:pulseOk .55s ease-out}
+.theme-toggle{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:.72rem;font-weight:750;display:inline-flex;align-items:center;gap:6px}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.switch-row:last-child{border-bottom:0}
+.switch{position:relative;width:46px;height:26px;flex:0 0 46px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s}
+.slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+.slider{background:var(--primary)}
+.switch input:checked+.slider:before{transform:translateX(20px)}
+@media print{
+  .appbar,.nav,.fab,.install-banner,.watermark,.toast,.toolbar button,.modal-bg{display:none!important}
+  body{padding:0;background:#fff;color:#000}
+  main{max-width:100%;padding:0}
+  .view{display:none!important}
+  .view.print-active{display:block!important}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+}
+
 </style>
 </head>
 <body>
@@ -231,7 +271,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <div class="year-pill"><button onclick="changeYear(-1)" aria-label="Any anterior">‹</button><select id="yearSelect" onchange="selectYear(this.value)"></select><button onclick="changeYear(1)" aria-label="Any següent">›</button></div>
 </div></header>
 
-<div class="watermark" aria-hidden="true">TIP 18675</div><div id="installBanner" class="install-banner" role="status"><div class="grow"><strong>Instal·la Registre Horari</strong><small>Accedeix més ràpidament des de la pantalla d’inici.</small></div><button class="btn primary small" onclick="installApp()">Instal·lar</button><button class="btn secondary small" onclick="dismissInstall()" aria-label="Tancar">×</button></div><main>
+<div class="watermark" id="watermark" aria-hidden="true"></div><div id="installBanner" class="install-banner" role="status"><div class="grow"><strong>Instal·la Registre Horari</strong><small>Accedeix més ràpidament des de la pantalla d’inici.</small></div><button class="btn primary small" onclick="installApp()">Instal·lar</button><button class="btn secondary small" onclick="dismissInstall()" aria-label="Tancar">×</button></div><main>
 <section id="view-home" class="view active">
   <div class="section card hero">
     <div class="hero-top"><div><div class="eyebrow">Còmput anual</div><h2 id="saldo">+0:00</h2><div class="saldo" id="saldoText">Calculant…</div></div><div class="chip" id="progressPct">0%</div></div>
@@ -279,12 +319,24 @@ main{padding-top:clamp(12px,1.8vw,22px)}
       <div><label>Guàrdies nit (h)</label><input type="number" id="cfgGnit" step=".5"></div>
       <div><label>Acumulades inicials (h)</label><input type="number" id="cfgAccum" step=".5"></div>
     </div>
-    <label>Títol</label><input id="cfgTitle"><label>Subtítol</label><input id="cfgSubtitle">
-    <button class="btn primary" onclick="saveConfig()">Desar configuració</button>
+    <label>Títol</label><input id="cfgTitle"><label>Subtítol</label><input id="cfgSubtitle"><label>TIP / Identificador (marca d'aigua)</label><input id="cfgTip" placeholder="Ex: TIP 18675 (opcional)">
+    <div class="switch-row" style="grid-column:1/-1;margin-top:8px">
+      <div><strong>Mode fosc</strong><small style="display:block;color:var(--muted)">Auto (sistema) / Clar / Fosc</small></div>
+      <select id="cfgDark" style="width:auto;min-width:110px;margin:0">
+        <option value="auto">Auto</option>
+        <option value="light">Clar</option>
+        <option value="dark">Fosc</option>
+      </select>
+    </div>
+    <div class="switch-row" style="grid-column:1/-1">
+      <div><strong>Recordatori diari</strong><small style="display:block;color:var(--muted)">Notificació si no has registrat avui (navegadors compatibles)</small></div>
+      <label class="switch"><input type="checkbox" id="cfgNotify"><span class="slider"></span></label>
+    </div>
+    <button class="btn primary" onclick="saveConfig()" style="grid-column:1/-1">Desar configuració</button>
   </div>
   <div class="card"><div class="card-title">Torns</div><div id="shiftConfig"></div><button class="btn secondary small" onclick="addShift()">＋ Afegir torn</button></div>
   <div class="card"><div class="card-title">Dades i còpies de seguretat</div>
-    <div class="actions"><button class="btn secondary" onclick="exportJSON()">Exportar JSON</button><button class="btn secondary" onclick="importJSON()">Importar JSON</button><button class="btn secondary" onclick="exportCSV()">Exportar CSV</button></div>
+    <div class="actions"><button class="btn secondary" onclick="exportJSON()">Exportar JSON</button><button class="btn secondary" onclick="importJSON()">Importar JSON</button><button class="btn secondary" onclick="exportCSV()">Exportar CSV</button><button class="btn secondary" onclick="exportPDF()">Exportar PDF / Imprimir</button></div>
     <p class="hint" style="margin-top:10px">La importació reconeix el format de la versió anterior. Abans de substituir dades es crea una còpia local de seguretat.</p>
     <button class="btn danger" onclick="resetAll()">Esborrar dades</button>
   </div>
@@ -376,6 +428,7 @@ main{padding-top:clamp(12px,1.8vw,22px)}
 <input type="file" id="fileInput" accept="application/json" hidden>
 
 <script>
+// Registre Horari 2.1 – TIP configurable, mode fosc manual, recordatoris, export PDF, feedback millorat
 const KEY="registreHorariMossos";
 const MONTHS=["Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
 const DOW=["Dg","Dl","Dt","Dc","Dj","Dv","Ds"];
@@ -395,7 +448,7 @@ const DEFAULT_HOLIDAYS={"2026-01-01":"Cap d'Any","2026-01-06":"Reis","2026-04-03
 
 let state=defaultState(), currentMonth=new Date(), weekAnchor=startOfWeek(new Date()), selected=new Set(), multi=false, editingDay=null, editingTrial=null, trialDateFilter="", deferredPrompt=null;
 
-function defaultState(){return {titol:"Registre Horari",subtitol:"Personal",anyInici:2026,horesAnuals:1580,vacancesTotals:200,assumptesTotals:68,blausTotals:0,gnpTotals:0,gnitTotals:0,acumTotals:0,torns:clone(DEFAULT_SHIFTS),festius:clone(DEFAULT_HOLIDAYS),registres:{},judicis:[],historic:{}}}
+function defaultState(){return {titol:"Registre Horari",subtitol:"Personal",tip:"",darkMode:"auto",notifyDaily:false,anyInici:2026,horesAnuals:1580,vacancesTotals:200,assumptesTotals:68,blausTotals:0,gnpTotals:0,gnitTotals:0,acumTotals:0,torns:clone(DEFAULT_SHIFTS),festius:clone(DEFAULT_HOLIDAYS),registres:{},judicis:[],historic:{}}}
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function pad(n){return String(n).padStart(2,"0")}
 function key(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
@@ -522,12 +575,18 @@ function expectedToDate(){
   const total=Math.max(1,(end-start)/86400000+1),elapsed=Math.max(0,Math.min(total,(asOf-start)/86400000+1));
   return state.horesAnuals*(elapsed/total)
 }
-function saldoText(v){return v>=0?`Vas ${fmtHours(v)} respecte al ritme necessari`:`Vas ${fmtHours(v)} respecte al ritme necessari`}
+function saldoText(v){
+  const c=calc();
+  if(c.worked < 1 && c.progress < 2) return "Comença a registrar per veure el teu ritme";
+  return v>=0?`Vas ${fmtHours(v)} respecte al ritme necessari`:`Vas ${fmtHours(v)} respecte al ritme necessari`;
+}
 function renderAll(){renderHeader();renderHome();renderCalendar();renderWeek();renderTrials();renderStats();renderMore()}
 function renderHeader(){
  document.getElementById("app-title").textContent=state.titol||"Registre Horari";document.getElementById("app-subtitle").textContent=state.subtitol||"";
  const sel=document.getElementById("yearSelect");sel.innerHTML=years().map(y=>`<option value="${y}" ${y===state.anyInici?"selected":""}>${y}/${String(y+1).slice(-2)}</option>`).join("");
  document.title=state.titol||"Registre Horari";
+ const wm=document.getElementById("watermark");
+ if(wm){wm.textContent=state.tip||"";wm.style.display=state.tip?"":"none";}
 }
 function renderHome(){
  const c=calc();document.getElementById("saldo").textContent=fmtHours(c.saldo);document.getElementById("saldoText").textContent=saldoText(c.saldo);document.getElementById("progressPct").textContent=Math.round(c.progress)+"%";document.getElementById("progressBar").style.width=c.progress+"%";document.getElementById("workedLabel").textContent=plainHours(c.worked)+" h fetes";document.getElementById("targetLabel").textContent="de "+plainHours(state.horesAnuals)+" h";
@@ -629,7 +688,7 @@ function fillShiftSelects(){const opts=state.torns.map(s=>`<option value="${esca
 function shiftChanged(){const s=getShift(document.getElementById("dayShift").value);if(s){document.getElementById("dayStart").value=s.inici;document.getElementById("dayEnd").value=s.fi;document.getElementById("dayHours").value=defaultShiftHours(s);updateHint()}}
 function updateHint(){const s=getShift(document.getElementById("dayShift").value),h=Number(document.getElementById("dayHours").value)||0,base=isMorning(s)?7.5:Number(s?.hores)||0;document.getElementById("dayCalcHint").textContent=s?`Base del torn: ${base} h · Acumulades generades si superes la base: ${Math.max(0,h-base).toFixed(2)} h`:""}
 function updateDayForm(){const t=document.getElementById("dayType").value,work=t==="treball";document.getElementById("workFields").style.display=work?"block":"none";document.getElementById("conceptFields").style.display=!work&&t?"block":"none";if(work)updateHint()}
-function saveDay(){if(!editingDay)return;const t=document.getElementById("dayType").value;if(!t)delete state.registres[editingDay];else{const r={tipus:t,notes:document.getElementById("dayNotes").value.trim(),noteIcon:document.getElementById("dayNoteIcon").value||""};if(t==="treball"){r.torn=document.getElementById("dayShift").value;r.entrada=document.getElementById("dayStart").value;r.sortida=document.getElementById("dayEnd").value;r.hores=Number(document.getElementById("dayHours").value)||0}else r.horesConcepte=Number(document.getElementById("conceptHours").value)||0;state.registres[editingDay]=r}save();closeModal("dayModal");renderAll();toast("Jornada desada")}
+function saveDay(){if(!editingDay)return;const t=document.getElementById("dayType").value;if(!t)delete state.registres[editingDay];else{const r={tipus:t,notes:document.getElementById("dayNotes").value.trim(),noteIcon:document.getElementById("dayNoteIcon").value||""};if(t==="treball"){r.torn=document.getElementById("dayShift").value;r.entrada=document.getElementById("dayStart").value;r.sortida=document.getElementById("dayEnd").value;r.hores=Number(document.getElementById("dayHours").value)||0}else r.horesConcepte=Number(document.getElementById("conceptHours").value)||0;state.registres[editingDay]=r}save();closeModal("dayModal");renderAll();toast("Jornada desada ✓","success")}
 function deleteDay(){if(!editingDay||!confirm("Esborrar aquest registre?"))return;delete state.registres[editingDay];save();closeModal("dayModal");renderAll();toast("Registre esborrat")}
 function openBulk(){if(!selected.size)return toast("Selecciona almenys un dia");document.getElementById("bulkCount").textContent=`${selected.size} dia(s) seleccionat(s)`;fillShiftSelects();updateBulk();openModal("bulkModal")}
 function updateBulk(){const t=document.getElementById("bulkType").value;document.getElementById("bulkWork").style.display=t==="treball"?"block":"none";document.getElementById("bulkHours").style.display=!["treball","esborrar"].includes(t)?"block":"none"}
@@ -646,8 +705,30 @@ function renderStats(){
  const c=calc();document.getElementById("statsDetail").innerHTML=[["blue",plainHours(c.worked)+" h","Treball / còmput"],["green",plainHours(c.accum)+" h","Acumulades"],["pink",plainHours(c.gnit)+" h","Nits"],["orange",plainHours(c.extra)+" h","Extres"],["purple",plainHours(c.vac)+" h","Vacances usades"],["cyan",plainHours(c.pers)+" h","AP usats"],["blue",plainHours(c.gnp)+" h","GNP"],["green",plainHours(c.blue)+" h","Blaus usats"]].map(x=>`<div class="stat ${x[0]}"><b>${x[1]}</b><span>${x[2]}</span></div>`).join("");
  const weeks=Math.max(1,Math.round((new Date()-new Date(state.anyInici,1,1))/604800000)+1),rate=c.worked/weeks,remaining=Math.max(0,state.horesAnuals-c.worked),forecast=c.worked+rate*10;document.getElementById("forecast").innerHTML=`<div class="row"><div class="grow"><strong>Ritme actual</strong><small>${plainHours(rate)} h/setmana · ${weeks} setmana(es) amb dades</small></div><span class="chip info">Previsió: ${plainHours(Math.min(state.horesAnuals,forecast))} h</span></div><div class="hint" style="margin-top:10px">La previsió és orientativa i extrapola el ritme actual; no modifica cap dada.</div>`;
 }
-function renderMore(){document.getElementById("cfgHours").value=state.horesAnuals;document.getElementById("cfgVac").value=state.vacancesTotals;document.getElementById("cfgPers").value=state.assumptesTotals;document.getElementById("cfgBlue").value=state.blausTotals;document.getElementById("cfgGnp").value=state.gnpTotals;document.getElementById("cfgGnit").value=state.gnitTotals;document.getElementById("cfgAccum").value=state.acumTotals;document.getElementById("cfgTitle").value=state.titol;document.getElementById("cfgSubtitle").value=state.subtitol;document.getElementById("shiftConfig").innerHTML=state.torns.map((s,i)=>`<div class="setting-row"><div><strong><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${escapeHtml(s.color||"#93c5fd")};margin-right:6px;vertical-align:-1px"></span>${escapeHtml(s.nom)}</strong><small>${s.inici} → ${s.fi} · ${s.hores} h</small></div><div style="display:flex;align-items:center;gap:7px"><input type="color" value="${escapeHtml(s.color||"#93c5fd")}" title="Color del torn" onchange="setShiftColor(${i},this.value)" style="width:38px;height:32px;padding:2px;margin:0"><button class="btn secondary small" onclick="editShift(${i})">Editar</button><button class="btn danger small" onclick="deleteShift(${i})">Esborrar</button></div></div>`).join("");document.getElementById("pwaStatus").textContent=window.matchMedia("(display-mode: standalone)").matches?"Aplicació instal·lada.":"Pots instal·lar-la com a PWA si el navegador ho permet."}
-function saveConfig(){state.horesAnuals=Number(document.getElementById("cfgHours").value)||0;state.vacancesTotals=Number(document.getElementById("cfgVac").value)||0;state.assumptesTotals=Number(document.getElementById("cfgPers").value)||0;state.blausTotals=Number(document.getElementById("cfgBlue").value)||0;state.gnpTotals=Number(document.getElementById("cfgGnp").value)||0;state.gnitTotals=Number(document.getElementById("cfgGnit").value)||0;state.acumTotals=Number(document.getElementById("cfgAccum").value)||0;state.titol=document.getElementById("cfgTitle").value.trim()||"Registre Horari";state.subtitol=document.getElementById("cfgSubtitle").value.trim();save();renderAll();toast("Configuració desada")}
+function renderMore(){document.getElementById("cfgHours").value=state.horesAnuals;document.getElementById("cfgVac").value=state.vacancesTotals;document.getElementById("cfgPers").value=state.assumptesTotals;document.getElementById("cfgBlue").value=state.blausTotals;document.getElementById("cfgGnp").value=state.gnpTotals;document.getElementById("cfgGnit").value=state.gnitTotals;document.getElementById("cfgAccum").value=state.acumTotals;document.getElementById("cfgTitle").value=state.titol;document.getElementById("cfgSubtitle").value=state.subtitol;document.getElementById("cfgTip").value=state.tip||"";
+ const darkEl=document.getElementById("cfgDark");if(darkEl)darkEl.value=state.darkMode||"auto";
+ const notEl=document.getElementById("cfgNotify");if(notEl)notEl.checked=!!state.notifyDaily;document.getElementById("shiftConfig").innerHTML=state.torns.map((s,i)=>`<div class="setting-row"><div><strong><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${escapeHtml(s.color||"#93c5fd")};margin-right:6px;vertical-align:-1px"></span>${escapeHtml(s.nom)}</strong><small>${s.inici} → ${s.fi} · ${s.hores} h</small></div><div style="display:flex;align-items:center;gap:7px"><input type="color" value="${escapeHtml(s.color||"#93c5fd")}" title="Color del torn" onchange="setShiftColor(${i},this.value)" style="width:38px;height:32px;padding:2px;margin:0"><button class="btn secondary small" onclick="editShift(${i})">Editar</button><button class="btn danger small" onclick="deleteShift(${i})">Esborrar</button></div></div>`).join("");document.getElementById("pwaStatus").textContent=window.matchMedia("(display-mode: standalone)").matches?"Aplicació instal·lada.":"Pots instal·lar-la com a PWA si el navegador ho permet."}
+function saveConfig(){
+ state.horesAnuals=Number(document.getElementById("cfgHours").value)||0;
+ state.vacancesTotals=Number(document.getElementById("cfgVac").value)||0;
+ state.assumptesTotals=Number(document.getElementById("cfgPers").value)||0;
+ state.blausTotals=Number(document.getElementById("cfgBlue").value)||0;
+ state.gnpTotals=Number(document.getElementById("cfgGnp").value)||0;
+ state.gnitTotals=Number(document.getElementById("cfgGnit").value)||0;
+ state.acumTotals=Number(document.getElementById("cfgAccum").value)||0;
+ state.titol=document.getElementById("cfgTitle").value.trim()||"Registre Horari";
+ state.subtitol=document.getElementById("cfgSubtitle").value.trim();
+ state.tip=document.getElementById("cfgTip").value.trim();
+ state.darkMode=document.getElementById("cfgDark")?.value||"auto";
+ const wantNotify=!!document.getElementById("cfgNotify")?.checked;
+ const finish=(msg)=>{save();applyTheme();scheduleDailyCheck();renderAll();toast(msg||"Configuració desada","success")};
+ if(wantNotify && !state.notifyDaily){
+   requestNotifyPermission().then(ok=>{state.notifyDaily=ok;finish(ok?"Recordatori activat":"Permís de notificacions denegat")});
+ } else {
+   state.notifyDaily=wantNotify;
+   finish();
+ }
+}
 function editShift(i){
  const s=state.torns[i];if(!s)return;
  const nom=prompt("Nom del torn",s.nom);if(nom===null)return;
@@ -676,7 +757,92 @@ function exportCSV(){const rows=[["Data","Tipus","Torn","Entrada","Sortida","Hor
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function resetAll(){if(!confirm("Es creará una còpia local i després s'esborraran totes les dades. Continuar?"))return;localStorage.setItem(KEY+".backup-"+Date.now(),JSON.stringify(state));state=defaultState();save();renderAll();toast("Dades restablertes")}
 function openModal(id){document.getElementById(id).classList.add("open")}function closeModal(id){document.getElementById(id).classList.remove("open");if(id==="dayModal")editingDay=null;if(id==="trialModal")editingTrial=null}
-function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove("show"),2200)}
+function toast(msg,type){const t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.className="toast show"+(type?" "+type:"");clearTimeout(window.__toast);window.__toast=setTimeout(()=>{t.classList.remove("show")},type==="success"?2800:2200)}
+
+
+/* ——— Tema, notificacions i PDF (2.1) ——— */
+function applyTheme(){
+  const mode=state.darkMode||"auto";
+  const root=document.documentElement;
+  root.classList.remove("dark");
+  if(mode==="dark") root.classList.add("dark");
+  else if(mode==="light"){/* force light: no class */}
+  else if(window.matchMedia("(prefers-color-scheme: dark)").matches) root.classList.add("dark");
+}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if((state.darkMode||"auto")==="auto")applyTheme()});
+
+async function requestNotifyPermission(){
+  if(!("Notification" in window)){toast("Aquest navegador no suporta notificacions","warn");return false}
+  if(Notification.permission==="granted")return true;
+  if(Notification.permission==="denied"){toast("Notificacions bloquejades al navegador","warn");return false}
+  try{const p=await Notification.requestPermission();return p==="granted"}catch(e){return false}
+}
+function scheduleDailyCheck(){
+  clearTimeout(window.__dailyCheck);
+  if(!state.notifyDaily||!("Notification" in window)||Notification.permission!=="granted")return;
+  const now=new Date();
+  // Check every 30 min while app is open; also on visibility
+  const tick=()=>{
+    if(!state.notifyDaily)return;
+    const key=todayKey();
+    if(!state.registres[key] && now.getHours()>=18){
+      const last=localStorage.getItem(KEY+".lastNotify");
+      if(last!==key){
+        try{new Notification("Registre Horari",{body:"Encara no has registrat la jornada d'avui.",icon:"icons/app-icon.png",tag:"registre-daily"});localStorage.setItem(KEY+".lastNotify",key)}catch(e){}
+      }
+    }
+  };
+  tick();
+  window.__dailyCheck=setInterval(tick,30*60*1000);
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")scheduleDailyCheck()});
+
+function exportPDF(){
+  const c=calc();
+  const year=state.anyInici;
+  const rows=Object.entries(state.registres).sort().map(([k,r])=>{
+    const s=r.tipus==="treball"?getShift(r.torn):null;
+    const h=r.tipus==="treball"?(r.hores||0):(r.horesConcepte||0);
+    return `<tr><td>${k}</td><td>${TYPE_NAMES[r.tipus]||r.tipus}</td><td>${s?.nom||"—"}</td><td>${plainHours(h)}</td><td>${(r.notes||"").replace(/</g,"&lt;")}</td></tr>`;
+  }).join("");
+  const htmlDoc=`<!doctype html><html lang="ca"><head><meta charset="utf-8"><title>Resum ${year}/${year+1}</title>
+  <style>
+    body{font-family:system-ui,sans-serif;color:#111;padding:24px;max-width:900px;margin:auto}
+    h1{font-size:1.4rem;margin:0 0 4px} h2{font-size:1.05rem;margin:24px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+    .meta{color:#555;font-size:.85rem;margin-bottom:16px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0 20px}
+    .stat{border:1px solid #ddd;border-radius:8px;padding:10px} .stat b{display:block;font-size:1.15rem}
+    .stat span{font-size:.7rem;color:#666}
+    table{width:100%;border-collapse:collapse;font-size:.8rem} th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+    th{background:#f1f5f9} tr:nth-child(even){background:#f8fafc}
+    @media print{body{padding:0} .no-print{display:none}}
+  </style></head><body>
+  <h1>${escapeHtml(state.titol||"Registre Horari")} · ${year}/${String(year+1).slice(-2)}</h1>
+  <div class="meta">${escapeHtml(state.subtitol||"")} ${state.tip?" · "+escapeHtml(state.tip):""} · Generat el ${new Date().toLocaleString("ca-ES")}</div>
+  <h2>Resum anual</h2>
+  <div class="stats">
+    <div class="stat"><b>${plainHours(c.worked)} h</b><span>Hores fetes</span></div>
+    <div class="stat"><b>${plainHours(state.horesAnuals)} h</b><span>Objectiu anual</span></div>
+    <div class="stat"><b>${fmtHours(c.saldo)}</b><span>Saldo vs ritme</span></div>
+    <div class="stat"><b>${Math.round(c.progress)}%</b><span>Progrés</span></div>
+    <div class="stat"><b>${plainHours(state.vacancesTotals-c.vac)} h</b><span>Vacances restants</span></div>
+    <div class="stat"><b>${plainHours(state.assumptesTotals-c.pers)} h</b><span>Assumptes restants</span></div>
+    <div class="stat"><b>${plainHours(c.gnit)} h</b><span>Nits</span></div>
+    <div class="stat"><b>${plainHours(c.extra)} h</b><span>Extres</span></div>
+  </div>
+  <h2>Registres (${Object.keys(state.registres).length})</h2>
+  <table><thead><tr><th>Data</th><th>Tipus</th><th>Torn</th><th>Hores</th><th>Notes</th></tr></thead>
+  <tbody>${rows||"<tr><td colspan=5>Sense registres</td></tr>"}</tbody></table>
+  <p class="no-print" style="margin-top:24px"><button onclick="window.print()" style="padding:10px 18px;font-size:1rem;cursor:pointer">Imprimir / Desar com a PDF</button>
+  <button onclick="window.close()" style="padding:10px 18px;margin-left:8px;cursor:pointer">Tancar</button></p>
+  <script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script>
+  </body></html>`;
+  const w=window.open("","_blank");
+  if(!w){toast("Permet finestres emergents per exportar","warn");return}
+  w.document.write(htmlDoc);w.document.close();
+  toast("Resum obert · utilitza «Desar com a PDF»","success");
+}
+
 
 function isStandalone(){return window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true}
 function updateInstallBanner(){const b=document.getElementById("installBanner"),btn=document.getElementById("installBtn");if(!b)return;const ready=!!deferredPrompt;const visible=ready&&!isStandalone()&&!localStorage.getItem(KEY+".installDismissed");b.classList.toggle("show",visible);if(btn)btn.style.display=ready&&!isStandalone()?"inline-block":"none"}
@@ -694,6 +860,8 @@ if("serviceWorker" in navigator){
   });
 }
 load();
+applyTheme();
+scheduleDailyCheck();
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 updateInstallBanner();
 </script>
