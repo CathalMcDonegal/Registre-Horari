@@ -309,9 +309,36 @@ html.dark .chip.neu{background:#1e293b;color:#cbd5e1}
 .permit-filters button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
 #permitCount{font-size:.72rem;color:var(--muted);margin-bottom:8px}
 
+
+/* Pantalla de bloqueig */
+#lockScreen{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+#lockScreen.hidden{display:none}
+.lock-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;backdrop-filter:blur(12px);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.lock-box h2{margin:0 0 6px;color:#f1f5f9;font-size:1.2rem}
+.lock-box p{margin:0 0 18px;color:#94a3b8;font-size:.82rem}
+.lock-box input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.6);color:#f8fafc;font-size:1.1rem;letter-spacing:.15em;text-align:center;margin-bottom:12px}
+.lock-box input:focus{outline:2px solid #60a5fa;border-color:transparent}
+.lock-box button{width:100%;padding:13px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;font-size:.95rem}
+.lock-box button:active{background:#1d4ed8}
+.lock-error{color:#fca5a5;font-size:.78rem;min-height:1.2em;margin:8px 0 0}
+.lock-wm{margin-top:18px;font-size:.7rem;color:#64748b;letter-spacing:.04em}
+
 </style>
 </head>
 <body>
+
+<div id="lockScreen" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+  <div class="lock-box">
+    <h2 id="lockTitle">Registre Horari</h2>
+    <p>Introdueix la contrasenya per continuar</p>
+    <form id="lockForm" onsubmit="return tryUnlock(event)">
+      <input type="password" id="lockInput" inputmode="numeric" autocomplete="off" placeholder="••••" maxlength="12" aria-label="Contrasenya">
+      <button type="submit">Entrar</button>
+      <div class="lock-error" id="lockError"></div>
+    </form>
+    <div class="lock-wm">Ús exclusiu TIP 22953</div>
+  </div>
+</div>
 <header class="appbar"><div class="appbar-row">
 <div class="brand"><h1 id="app-title">Registre Horari</h1><small id="app-subtitle">Personal</small></div>
 <div class="year-pill"><button onclick="changeYear(-1)" aria-label="Any anterior">‹</button><select id="yearSelect" onchange="selectYear(this.value)"></select><button onclick="changeYear(1)" aria-label="Any següent">›</button></div>
@@ -866,7 +893,7 @@ function renderHeader(){
  const sel=document.getElementById("yearSelect");sel.innerHTML=years().map(y=>`<option value="${y}" ${y===state.anyInici?"selected":""}>${y}/${String(y+1).slice(-2)}</option>`).join("");
  document.title=state.titol||"Registre Horari";
  const wm=document.getElementById("watermark");
- if(wm){wm.textContent=state.tip||"";wm.style.display=state.tip?"":"none";}
+ if(wm){wm.textContent="Ús exclusiu TIP 22953";wm.style.display="";}
 }
 function renderHome(){
  const c=calc();document.getElementById("saldo").textContent=fmtHours(c.saldo);document.getElementById("saldoText").textContent=saldoText(c.saldo);document.getElementById("progressPct").textContent=Math.round(c.progress)+"%";document.getElementById("progressBar").style.width=c.progress+"%";document.getElementById("workedLabel").textContent=plainHours(c.worked)+" h fetes";document.getElementById("targetLabel").textContent="de "+plainHours(state.horesAnuals)+" h";
@@ -1306,6 +1333,45 @@ if("serviceWorker" in navigator){
     }catch(e){}
   });
 }
+
+/* --- Protecció amb contrasenya --- */
+const APP_PASSWORD = "1312";
+const UNLOCK_KEY = "registreHorariMossos.unlock";
+
+function isUnlocked(){
+  try { return sessionStorage.getItem(UNLOCK_KEY) === "1"; } catch(e){ return false; }
+}
+function setUnlocked(){
+  try { sessionStorage.setItem(UNLOCK_KEY, "1"); } catch(e){}
+}
+function tryUnlock(e){
+  if(e) e.preventDefault();
+  const input = document.getElementById("lockInput");
+  const err = document.getElementById("lockError");
+  const val = (input?.value || "").trim();
+  if(val === APP_PASSWORD){
+    setUnlocked();
+    document.getElementById("lockScreen")?.classList.add("hidden");
+    if(err) err.textContent = "";
+    if(input) input.value = "";
+    return false;
+  }
+  if(err) err.textContent = "Contrasenya incorrecta";
+  if(input){ input.value = ""; input.focus(); }
+  return false;
+}
+function enforceLock(){
+  const screen = document.getElementById("lockScreen");
+  if(!screen) return;
+  if(isUnlocked()){
+    screen.classList.add("hidden");
+  } else {
+    screen.classList.remove("hidden");
+    setTimeout(()=>document.getElementById("lockInput")?.focus(), 80);
+  }
+}
+enforceLock();
+
 load();
 applyTheme();
 scheduleDailyCheck();
