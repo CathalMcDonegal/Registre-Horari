@@ -1,4 +1,4 @@
-const CACHE='registre-horari-v52';
+const CACHE='registre-horari-v53';
 const APP_SHELL=['./','./index.html','./manifest.json','./hours-auto.js'];
 
 self.addEventListener('install',event=>{
@@ -31,17 +31,15 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET') return;
 
   const url=new URL(event.request.url);
+  const isNavigation=event.request.mode==='navigate';
   const isIndex=url.pathname.endsWith('/index.html');
-  const isAppShell=
-    event.request.mode==='navigate' ||
-    isIndex ||
-    url.pathname.endsWith('/manifest.json');
+  const isAppShell=isNavigation || isIndex || url.pathname.endsWith('/manifest.json');
 
   if(isAppShell){
     event.respondWith(
       fetch(event.request)
         .then(async response=>{
-          const finalResponse=isIndex ? await injectAutoHours(response) : response;
+          const finalResponse=(isNavigation||isIndex) ? await injectAutoHours(response) : response;
           const copy=finalResponse.clone();
           caches.open(CACHE).then(cache=>cache.put(event.request,copy));
           return finalResponse;
