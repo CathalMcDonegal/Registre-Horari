@@ -1,4 +1,4 @@
-const CACHE='registre-horari-v53';
+const CACHE='registre-horari-v54';
 const APP_SHELL=['./','./index.html','./manifest.json','./hours-auto.js'];
 
 self.addEventListener('install',event=>{
@@ -24,7 +24,13 @@ async function injectAutoHours(response){
   const text=await response.text();
   if(text.includes('hours-auto.js')) return new Response(text,{status:response.status,statusText:response.statusText,headers:response.headers});
   const injected=text.replace('</body>','<script src="./hours-auto.js"></script></body>');
-  return new Response(injected,{status:response.status,statusText:response.statusText,headers:response.headers});
+  const headers=new Headers(response.headers);
+  // response.text() ja ha descomprimit el contingut; no podem conservar aquests headers.
+  headers.delete('content-encoding');
+  headers.delete('content-length');
+  headers.delete('content-range');
+  headers.delete('etag');
+  return new Response(injected,{status:response.status,statusText:response.statusText,headers});
 }
 
 self.addEventListener('fetch',event=>{
