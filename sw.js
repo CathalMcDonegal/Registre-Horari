@@ -1,5 +1,5 @@
-const CACHE='registre-horari-v51';
-const APP_SHELL=['./','./index.html','./manifest.json'];
+const CACHE='registre-horari-v52';
+const APP_SHELL=['./','./index.html','./manifest.json','./hours-auto.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
@@ -19,22 +19,32 @@ self.addEventListener('activate',event=>{
   );
 });
 
+async function injectAutoHours(response){
+  if(!response || !response.ok) return response;
+  const text=await response.text();
+  if(text.includes('hours-auto.js')) return new Response(text,{status:response.status,statusText:response.statusText,headers:response.headers});
+  const injected=text.replace('</body>','<script src="./hours-auto.js"></script></body>');
+  return new Response(injected,{status:response.status,statusText:response.statusText,headers:response.headers});
+}
+
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET') return;
 
   const url=new URL(event.request.url);
+  const isIndex=url.pathname.endsWith('/index.html');
   const isAppShell=
     event.request.mode==='navigate' ||
-    url.pathname.endsWith('/index.html') ||
+    isIndex ||
     url.pathname.endsWith('/manifest.json');
 
   if(isAppShell){
     event.respondWith(
       fetch(event.request)
-        .then(response=>{
-          const copy=response.clone();
+        .then(async response=>{
+          const finalResponse=isIndex ? await injectAutoHours(response) : response;
+          const copy=finalResponse.clone();
           caches.open(CACHE).then(cache=>cache.put(event.request,copy));
-          return response;
+          return finalResponse;
         })
         .catch(()=>caches.match(event.request).then(cached=>cached||caches.match('./index.html')))
     );
