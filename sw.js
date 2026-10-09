@@ -1,7 +1,7 @@
-const CACHE='registre-horari-v60';
+const CACHE='registre-horari-v61';
 
-// Versió de recuperació: elimina les versions antigues del Service Worker
-// i deixa que GitHub Pages serveixi l'HTML directament, sense modificar-lo.
+// Service Worker estable: manté l'HTML servit per GitHub Pages i afegeix
+// el motor de càlcul d'hores al final de cada navegació.
 self.addEventListener('install', event => {
   event.waitUntil(self.skipWaiting());
 });
@@ -17,13 +17,36 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  // Navegacions sempre des de xarxa. No toquem ni reconstruïm l'HTML.
   if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request).then(async response => {
+        const type = response.headers.get('content-type') || '';
+        if (!type.includes('text/html')) return response;
+
+        const html = await response.text();
+        if (html.includes('hours-auto.js')) {
+          return new Response(html, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+          });
+        }
+
+        const injected = html.replace(
+          '</body>',
+          '<script src="./hours-auto.js?v=61"></script></body>'
+        );
+
+        return new Response(injected, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers
+        });
+      })
+    );
     return;
   }
 
-  // Recursos normals: xarxa primer, memòria cau només com a reserva.
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );
