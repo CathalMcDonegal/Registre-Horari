@@ -591,7 +591,7 @@ html.dark .chip.neu{background:#1e293b;color:#cbd5e1}
 <div id="workFields">
 <label>Torn</label><select id="dayShift" onchange="shiftChanged()"></select>
 <div class="form-grid"><div><label>Entrada</label><input type="time" id="dayStart"></div><div><label>Sortida</label><input type="time" id="dayEnd"></div></div>
-<label>Hores computables / reals</label><input type="number" id="dayHours" min="0" max="24" step=".25"><div class="hint" id="dayCalcHint"></div>
+<label>Hores computables / reals</label><input type="number" id="dayHours" min="0" max="24" step=".25" readonly title="Calculades automàticament a partir de l'entrada i la sortida"><div class="hint" id="dayCalcHint"></div>
 </div>
 <div id="conceptFields" style="display:none"><label>Hores del concepte</label><input type="number" id="conceptHours" min="0" max="24" step=".25"></div>
 <label>Observació / icona</label><input type="hidden" id="dayNoteIcon"><button type="button" class="btn secondary" id="noteIconBtn" onclick="openNoteIconPicker()" style="width:100%;text-align:left;margin-bottom:10px">➕ Tria una icona</button><label>Notes</label><textarea id="dayNotes" placeholder="Observacions…"></textarea>
@@ -1007,13 +1007,33 @@ function expectedWeek(){return 37.5}
 
 function changeWeek(days){weekAnchor=new Date(weekAnchor);weekAnchor.setDate(weekAnchor.getDate()+days);renderWeek()}
 
-function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("dayNoteIcon").value=r.noteIcon||"";updateNoteIconButton();document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();openModal("dayModal")}
+function openDay(k){editingDay=k;const d=parseKey(k),r=state.registres[k]||{},s=getShift(r.torn)||state.torns[0];document.getElementById("dayModalTitle").textContent=`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;document.getElementById("dayType").value=r.tipus||"treball";fillShiftSelects();document.getElementById("dayShift").value=r.torn||s?.id||"";document.getElementById("dayStart").value=r.entrada||s?.inici||"07:00";document.getElementById("dayEnd").value=r.sortida||s?.fi||"14:30";document.getElementById("dayHours").value=r.hores??defaultShiftHours(s);document.getElementById("conceptHours").value=r.horesConcepte??7.5;document.getElementById("dayNotes").value=r.notes||"";document.getElementById("dayNoteIcon").value=r.noteIcon||"";updateNoteIconButton();document.getElementById("deleteDayBtn").style.display=r.tipus?"block":"none";updateDayForm();calcHoursFromTimes();openModal("dayModal")}
 function updateNoteIconButton(){const icon=document.getElementById("dayNoteIcon")?.value||"";const b=document.getElementById("noteIconBtn");if(!b)return;b.innerHTML=icon?'<span class="note-icon-current">'+icon+'</span> Canviar icona':'➕ Tria una icona'}
 function openNoteIconPicker(){updateNoteIconButton();openModal("noteIconPicker")}
 function selectNoteIcon(icon){document.getElementById("dayNoteIcon").value=icon||"";updateNoteIconButton();closeModal("noteIconPicker")}
 function fillShiftSelects(){const opts=state.torns.map(s=>`<option value="${escapeHtml(s.id)}">${escapeHtml(s.abbr||s.nom)} · ${escapeHtml(s.nom)} (${s.hores}h)</option>`).join("");document.getElementById("dayShift").innerHTML=opts;document.getElementById("bulkShift").innerHTML=opts}
-function shiftChanged(){const s=getShift(document.getElementById("dayShift").value);if(s){document.getElementById("dayStart").value=s.inici;document.getElementById("dayEnd").value=s.fi;document.getElementById("dayHours").value=defaultShiftHours(s);updateHint()}}
+function shiftChanged(){const s=getShift(document.getElementById("dayShift").value);if(s){document.getElementById("dayStart").value=s.inici;document.getElementById("dayEnd").value=s.fi;calcHoursFromTimes()}}
 function updateHint(){const s=getShift(document.getElementById("dayShift").value),h=Number(document.getElementById("dayHours").value)||0,base=isMorning(s)?7.5:Number(s?.hores)||0;document.getElementById("dayCalcHint").textContent=s?`Base del torn: ${base} h · Acumulades generades si superes la base: ${Math.max(0,h-base).toFixed(2)} h`:""}
+function minutesFromTime(value){
+  if(!value) return null;
+  const m=String(value).trim().match(/^(\d{1,2}):(\d{2})/);
+  if(!m) return null;
+  return Number(m[1])*60+Number(m[2]);
+}
+function calcHoursFromTimes(){
+  const startEl=document.getElementById("dayStart");
+  const endEl=document.getElementById("dayEnd");
+  const hoursEl=document.getElementById("dayHours");
+  if(!startEl||!endEl||!hoursEl) return;
+  const a=minutesFromTime(startEl.value);
+  const b=minutesFromTime(endEl.value);
+  if(a===null||b===null){ return; }
+  let d=b-a;
+  if(d<0) d+=1440; // passa de mitjanit
+  const h=Math.round((d/60)*100)/100;
+  hoursEl.value=String(h);
+  updateHint();
+}
 function updateDayForm(){const t=document.getElementById("dayType").value,work=t==="treball";document.getElementById("workFields").style.display=work?"block":"none";document.getElementById("conceptFields").style.display=!work&&t?"block":"none";if(work)updateHint()}
 function saveDay(){if(!editingDay)return;const t=document.getElementById("dayType").value;if(!t)delete state.registres[editingDay];else{const r={tipus:t,notes:document.getElementById("dayNotes").value.trim(),noteIcon:document.getElementById("dayNoteIcon").value||""};if(t==="treball"){r.torn=document.getElementById("dayShift").value;r.entrada=document.getElementById("dayStart").value;r.sortida=document.getElementById("dayEnd").value;r.hores=Number(document.getElementById("dayHours").value)||0}else r.horesConcepte=Number(document.getElementById("conceptHours").value)||0;state.registres[editingDay]=r}save();closeModal("dayModal");renderAll();toast("Jornada desada ✓","success")}
 function deleteDay(){if(!editingDay||!confirm("Esborrar aquest registre?"))return;delete state.registres[editingDay];save();closeModal("dayModal");renderAll();toast("Registre esborrat")}
@@ -1397,7 +1417,17 @@ applyTheme();
 scheduleDailyCheck();
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 updateInstallBanner();
+// Càlcul automàtic d'hores des d'entrada/sortida
+(function(){
+  const start=document.getElementById("dayStart");
+  const end=document.getElementById("dayEnd");
+  if(start&&end){
+    ["input","change"].forEach(ev=>{
+      start.addEventListener(ev, calcHoursFromTimes);
+      end.addEventListener(ev, calcHoursFromTimes);
+    });
+  }
+})();
 </script>
-<script src="hours-auto.js"></script>
 </body>
 </html>
