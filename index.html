@@ -9,9 +9,10 @@
 <meta name="apple-mobile-web-app-title" content="Registre Horari">
 <meta name="description" content="Registre horari personal">
 <link rel="manifest" href="manifest.json">
+<script src="firebase-config.js"></script>
 <link rel="icon" type="image/png" sizes="64x64" href="icons/app-icon.png">
 <link rel="apple-touch-icon" href="icons/app-icon.png">
-<title>Registre Horari 2.0</title>
+<title>Registre Horari 2.3</title>
 <style>
 :root{--bg:#eef5ff;--card:#fff;--text:#10203a;--muted:#5b6b82;--line:#cbd9ee;--primary:#2563eb;--primary2:#1d4ed8;--green:#16a34a;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;--cyan:#0891b2;--pink:#db2777;--shadow:0 6px 22px rgba(15,23,42,.06);--safe:env(safe-area-inset-bottom,0px);--r:16px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{background:var(--bg)}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:var(--bg);min-height:100dvh;padding-bottom:calc(82px + var(--safe));line-height:1.4}
@@ -1350,7 +1351,7 @@ function exportPDF(){
   <p class="no-print" style="margin-top:24px"><button onclick="window.print()" style="padding:10px 18px;font-size:1rem;cursor:pointer">Imprimir / Desar com a PDF</button>
   <button onclick="window.close()" style="padding:10px 18px;margin-left:8px;cursor:pointer">Tancar</button></p>
   <script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script>
-  </body></html>`;
+  <script>const APP_PASSWORD="1312",UNLOCK_KEY="registreHorariMossos.unlock";function authConfigured(){const c=window.FIREBASE_CONFIG;return !!(c&&c.apiKey&&!/^PEGA/.test(c.apiKey))}function isUnlocked(){try{return sessionStorage.getItem(UNLOCK_KEY)==="1"}catch(e){return false}}function setUnlocked(){try{sessionStorage.setItem(UNLOCK_KEY,"1")}catch(e){}}function tryUnlock(e){if(e)e.preventDefault();if(authConfigured()){window.RHSync&&RHSync.login();return false}const i=document.getElementById("lockInput"),x=document.getElementById("lockError");if((i?.value||"").trim()===APP_PASSWORD){setUnlocked();document.getElementById("lockScreen").classList.add("hidden");i.value="";x.textContent=""}else{x.textContent="Contrasenya incorrecta";i.value="";i.focus()}return false}function enforceLock(){const s=document.getElementById("lockScreen");if(!s)return;if(authConfigured()){lockEmail.style.display="";lockRegister.style.display="";lockReset.style.display="";lockInput.removeAttribute("inputmode");lockInput.placeholder="Contrasenya";lockSub.textContent="Inicia sessió o crea el teu compte";s.classList.remove("hidden")}else if(isUnlocked())s.classList.add("hidden");else{s.classList.remove("hidden");setTimeout(()=>lockInput.focus(),80)}}enforceLock();function applyRemoteState(raw){state=migrate(raw);const p=JSON.stringify(state);localStorage.setItem(KEY,p);localStorage.setItem(KEY+".latest",p);window.__lastContent=null;renderAll()}</script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="sync.js"></script></body></html>`;
   const w=window.open("","_blank");
   if(!w){toast("Permet finestres emergents per exportar","warn");return}
   w.document.write(htmlDoc);w.document.close();
