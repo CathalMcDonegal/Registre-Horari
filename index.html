@@ -343,7 +343,6 @@ html.dark .chip.neu{background:#1e293b;color:#cbd5e1}
       <button type="button" id="lockReset" class="lock-link" style="display:none" onclick="RHSync.reset()">Has oblidat la contrasenya?</button>
       <div class="lock-error" id="lockError"></div>
     </form>
-    <div class="lock-wm">Ús exclusiu TIP 22953</div>
   </div>
 </div>
 <header class="appbar"><div class="appbar-row">
@@ -918,7 +917,7 @@ function renderHeader(){
  const sel=document.getElementById("yearSelect");sel.innerHTML=years().map(y=>`<option value="${y}" ${y===state.anyInici?"selected":""}>${y}/${String(y+1).slice(-2)}</option>`).join("");
  document.title=state.titol||"Registre Horari";
  const wm=document.getElementById("watermark");
- if(wm){wm.textContent="Ús exclusiu TIP 22953";wm.style.display="";}
+ if(wm){wm.textContent="";wm.style.display="none";}
 }
 function renderHome(){
  const c=calc();document.getElementById("saldo").textContent=fmtHours(c.saldo);document.getElementById("saldoText").textContent=saldoText(c.saldo);document.getElementById("progressPct").textContent=Math.round(c.progress)+"%";document.getElementById("progressBar").style.width=c.progress+"%";document.getElementById("workedLabel").textContent=plainHours(c.worked)+" h fetes";document.getElementById("targetLabel").textContent="de "+plainHours(state.horesAnuals)+" h";
