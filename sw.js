@@ -1,6 +1,6 @@
 // Service worker: xarxa primer, i còpia en memòria cau per funcionar sense connexió.
 const CACHE='registre-horari-v3';
-const CORE=['./','index.html','manifest.json','sync.js','firebase-config.js','icon-192.png','icon-512.png','apple-touch-icon.png','icons/app-icon.png',
+const CORE=['./','index.html','manifest.json','sync.js','firebase-config.js','icon-192.png','icon-512.png','apple-touch-icon.png','app-icon.png',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'];

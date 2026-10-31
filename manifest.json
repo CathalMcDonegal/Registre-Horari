@@ -14,7 +14,7 @@
   "categories": ["productivity", "utilities", "business"],
   "icons": [
     {
-      "src": "icons/app-icon.png",
+      "src": "app-icon.png",
       "sizes": "64x64",
       "type": "image/png",
       "purpose": "any"
