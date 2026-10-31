@@ -1,4 +1,4 @@
-# Registre Horari 2.2
+# Registre Horari 2.3
 
 Càlculs alineats amb el règim de 1580 h efectives dels Mossos d'Esquadra.
 
@@ -14,3 +14,8 @@ Clic a qualsevol targeta del resum ràpid (Nits, AP, Vacances, GNP, Acumulades, 
 
 ## Instal·lació
 Puja `index.html`, `manifest.json` i `sw.js` al repositori GitHub Pages. Mantén `icons/`.
+
+## Comptes i sincronització (2.3)
+Inici de sessió amb correu i contrasenya i sincronització en temps real entre dispositius (Firebase). Veure `SYNC.md`.
+Si `firebase-config.js` no està omplert, l'app funciona només en local amb la contrasenya antiga.
+Fitxers a pujar: `index.html`, `sync.js`, `firebase-config.js`, `sw.js`, `manifest.json` i les icones.
