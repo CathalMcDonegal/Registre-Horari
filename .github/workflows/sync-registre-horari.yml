@@ -1,0 +1,35 @@
+name: Sync Registre Horari index
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch index
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          if 'firebase-config.js' not in s:
+              s=s.replace('<link rel="manifest" href="manifest.json">','<link rel="manifest" href="manifest.json">\n<script src="firebase-config.js"></script>',1)
+          s=s.replace('<title>Registre Horari 2.0</title>','<title>Registre Horari 2.3</title>',1)
+          if '#lockScreen' not in s:
+              s=s.replace('</style>','''#lockScreen{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 100%);display:flex;align-items:center;justify-content:center;padding:24px}#lockScreen.hidden{display:none}.lock-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center}.lock-box h2{margin:0 0 6px;color:#f1f5f9}.lock-box p{margin:0 0 18px;color:#94a3b8}.lock-box input{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(15,23,42,.6);color:#f8fafc;text-align:center;margin-bottom:12px}.lock-box button{width:100%;padding:13px;border:0;border-radius:12px;background:#2563eb;color:#fff;font-weight:700}.lock-error{color:#fca5a5;font-size:.78rem;min-height:1.2em;margin:8px 0}.lock-box button.lock-sec{margin-top:10px;background:transparent;border:1px solid rgba(255,255,255,.3);color:#e2e8f0}.lock-box button.lock-link{margin-top:8px;background:none;color:#93c5fd;font-size:.8rem}.lock-wm{margin-top:18px;font-size:.7rem;color:#64748b}'''+'''</style>''',1)
+          if 'id="lockScreen"' not in s:
+              s=s.replace('<body>','''<body><div id="lockScreen" role="dialog" aria-modal="true"><div class="lock-box"><h2>Registre Horari</h2><p id="lockSub">Introdueix la contrasenya per continuar</p><form onsubmit="return tryUnlock(event)"><input type="email" id="lockEmail" class="lock-mail" placeholder="Correu electrònic" style="display:none"><input type="password" id="lockInput" inputmode="numeric" placeholder="••••" maxlength="64"><button type="submit">Entrar</button><button type="button" id="lockRegister" class="lock-sec" style="display:none" onclick="RHSync.register()">Crear compte nou</button><button type="button" id="lockReset" class="lock-link" style="display:none" onclick="RHSync.reset()">Has oblidat la contrasenya?</button><div class="lock-error" id="lockError"></div></form><div class="lock-wm">Ús exclusiu TIP 22953</div></div></div>''',1)
+          if 'function authConfigured()' not in s:
+              js='''<script>const APP_PASSWORD="1312",UNLOCK_KEY="registreHorariMossos.unlock";function authConfigured(){const c=window.FIREBASE_CONFIG;return !!(c&&c.apiKey&&!/^PEGA/.test(c.apiKey))}function isUnlocked(){try{return sessionStorage.getItem(UNLOCK_KEY)==="1"}catch(e){return false}}function setUnlocked(){try{sessionStorage.setItem(UNLOCK_KEY,"1")}catch(e){}}function tryUnlock(e){if(e)e.preventDefault();if(authConfigured()){window.RHSync&&RHSync.login();return false}const i=document.getElementById("lockInput"),x=document.getElementById("lockError");if((i?.value||"").trim()===APP_PASSWORD){setUnlocked();document.getElementById("lockScreen").classList.add("hidden");i.value="";x.textContent=""}else{x.textContent="Contrasenya incorrecta";i.value="";i.focus()}return false}function enforceLock(){const s=document.getElementById("lockScreen");if(!s)return;if(authConfigured()){lockEmail.style.display="";lockRegister.style.display="";lockReset.style.display="";lockInput.removeAttribute("inputmode");lockInput.placeholder="Contrasenya";lockSub.textContent="Inicia sessió o crea el teu compte";s.classList.remove("hidden")}else if(isUnlocked())s.classList.add("hidden");else{s.classList.remove("hidden");setTimeout(()=>lockInput.focus(),80)}}enforceLock();function applyRemoteState(raw){state=migrate(raw);const p=JSON.stringify(state);localStorage.setItem(KEY,p);localStorage.setItem(KEY+".latest",p);window.__lastContent=null;renderAll()}</script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script src="sync.js"></script>'''
+              s=s.replace('</body>',js+'</body>',1)
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add index.html
+          git diff --cached --quiet || git commit -m "Update Registre Horari to sync v2.3"
+          git push
