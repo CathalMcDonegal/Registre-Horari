@@ -3,17 +3,15 @@
   'use strict';
   function S(){try{return state}catch(e){return null}}
   function esc(v){try{return escapeHtml(v==null?'':String(v))}catch(e){return String(v==null?'':v).replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]))}}
-  function mins(v){if(!v||!/^[0-2]?\d:\d\d$/.test(v))return null;const p=v.split(':').map(Number);return p[0]*60+p[1]}
-  function elapsed(a,b){const x=mins(a),y=mins(b);if(x==null||y==null)return null;let d=y-x;if(d<0)d+=1440;return d/60}
-  function baseFor(r){
-    const st=S(); if(!st||!r)return 0;
-    let s=null; try{s=getShift(r.torn)}catch(e){}
-    if(!s)return 0;
-    try{if(typeof isMorning==='function'&&isMorning(s))return 7.5}catch(e){}
-    return Number(s.hores)||0;
+  function observation(r){
+    if(!r)return '';
+    return String(r.observacions ?? r.observacio ?? r.observación ?? r.observacion ?? r.notes ?? r.nota ?? '').trim();
   }
-  function workHours(r){const h=elapsed(r?.entrada,r?.sortida);return h!=null?h:Number(r?.hores)||0}
-  function isExtra(r){return r?.tipus==='treball' && workHours(r)>baseFor(r)+0.001}
+  function iconLabel(r){
+    if(!r?.noteIcon)return '';
+    return r.noteIcon==='red_plus'?'➕':String(r.noteIcon);
+  }
+  function dayLabel(d){return d?`${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`:''}
 
   function addSpecialFields(){
     if(document.getElementById('specialPayFields'))return;
@@ -55,6 +53,28 @@
     window.__homeDayPatched=true;
   }
 
+  function renderDayIconRow(k,r,clickable=true){
+    const d=typeof parseKey==='function'?parseKey(k):null;
+    const label=dayLabel(d)||k;
+    const icon=iconLabel(r);
+    const obs=observation(r);
+    if(!icon)return '';
+    return `<div class="row" ${clickable?`onclick="openDay('${k}')" style="cursor:pointer"`:''}><div class="grow"><strong>${esc(icon)} ${esc(label)}</strong><small>${esc(obs||'')}</small></div></div>`;
+  }
+
+  function renderTodayExtras(){
+    const st=S(),box=document.getElementById('todayCard');
+    if(!st||!box||typeof todayKey!=='function')return;
+    const k=todayKey(),r=st.registres?.[k];
+    if(!r?.noteIcon)return;
+    const html=renderDayIconRow(k,r,false);
+    if(!html)return;
+    const wrap=document.createElement('div');
+    wrap.className='section';
+    wrap.innerHTML='<div class="card-title">Avui</div>'+html;
+    box.appendChild(wrap);
+  }
+
   function renderUpcomingOnly(){
     const st=S(),box=document.getElementById('upcoming');
     if(!st||!box||typeof todayKey!=='function')return;
@@ -66,8 +86,8 @@
       if(r?.noteIcon)icons.push({d,k,r});
     }
     let html=trials.map(j=>`<div class="row" onclick="openTrial(${j.i})"><div class="grow"><strong>⚖️ ${esc(j.jutjat||'Judici')} · ${j.hora||''}</strong><small>${j.data} · ${esc(j.procediment||'')}</small></div><span class="chip ${j.cobrament?'ok':'warn'}">${j.cobrament?'Cobrat':'Pendent'}</span></div>`).join('');
-    html+=icons.slice(0,5).map(o=>`<div class="row" onclick="openDay('${o.k}')"><div class="grow"><strong>🔔 ${DOW[o.d.getDay()]} ${o.d.getDate()} ${MONTHS[o.d.getMonth()]}</strong><small>Dia amb icona / observació</small></div><span class="chip info">${esc(o.r.noteIcon==='red_plus'?'➕':o.r.noteIcon)}</span></div>`).join('');
-    box.innerHTML=html||'<div class="empty">No hi ha judicis ni dies amb icones programats.</div>';
+    html+=icons.slice(0,5).map(o=>renderDayIconRow(o.k,o.r,true)).join('');
+    box.innerHTML=html||'<div class="empty">No hi ha judicis ni dies programats.</div>';
   }
 
   function renderPendingOnly(){
@@ -78,15 +98,10 @@
       if(j.celebrat&&!j.cobrament){items.push(`<div class="row" onclick="openTrial(${i})" style="cursor:pointer"><div class="grow"><strong>⚖️ ${esc(j.jutjat||'Judici')} · ${j.data||'sense data'}</strong><small>Pendent de cobrament</small></div><span class="chip warn">Per cobrar</span></div>`)}
     });
     Object.entries(st.registres||{}).forEach(([k,r])=>{
-      if(isExtra(r)){
-        const d=typeof parseKey==='function'?parseKey(k):null;
-        const label=d?`${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`:k;
-        const h=workHours(r),base=baseFor(r),extra=Math.max(0,h-base);
-        items.push(`<div class="row" onclick="openDay('${k}')" style="cursor:pointer"><div class="grow"><strong>⏱️ ${label} · Hores extres</strong><small>${h.toFixed(2)} h treballades · ${extra.toFixed(2)} h per sobre de la base</small></div><span class="chip info">${extra.toFixed(2)} h</span></div>`);
-      }
+      /* Les hores extres NO són una acció pendent. Només s'hi mostra el dia si l'usuari ha marcat explícitament cobrament especial. */
       if(r?.pagamentEspecial&&!r?.pagamentEspecialCobrat){
         const d=typeof parseKey==='function'?parseKey(k):null;
-        const label=d?`${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`:k;
+        const label=dayLabel(d)||k;
         items.push(`<div class="row" onclick="openDay('${k}')" style="cursor:pointer"><div class="grow"><strong>💶 ${label} · Cobrament especial</strong><small>Pendent de cobrament</small></div><span class="chip warn">Per cobrar</span></div>`);
       }
     });
@@ -96,14 +111,19 @@
   function patchHome(){
     if(!window.renderHome||window.__homeSectionsPatched)return;
     const original=window.renderHome;
-    window.renderHome=function(){original.apply(this,arguments);renderUpcomingOnly();renderPendingOnly();};
+    window.renderHome=function(){
+      original.apply(this,arguments);
+      renderUpcomingOnly();
+      renderPendingOnly();
+      setTimeout(renderTodayExtras,0);
+    };
     window.__homeSectionsPatched=true;
-    renderUpcomingOnly();renderPendingOnly();
+    renderUpcomingOnly();renderPendingOnly();setTimeout(renderTodayExtras,0);
   }
 
   function boot(){
     patchDay();patchHome();
-    setTimeout(()=>{patchDay();patchHome();renderUpcomingOnly();renderPendingOnly()},0);
+    setTimeout(()=>{patchDay();patchHome();renderUpcomingOnly();renderPendingOnly();renderTodayExtras()},0);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
