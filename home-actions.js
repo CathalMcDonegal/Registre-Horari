@@ -12,6 +12,35 @@
     return r.noteIcon==='red_plus'?'➕':String(r.noteIcon);
   }
   function dayLabel(d){return d?`${DOW[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`:''}
+  function trialPaid(j){return !!(j?.cobrament||j?.cobrat||j?.paid||j?.pagat)}
+  function trialHeld(j){return !!(j?.celebrat||j?.held||j?.celebratJudici)}
+  function trialTime(j){
+    const t=String(j?.hora||j?.time||'').trim();
+    if(!t)return '';
+    return t.replace(/^([0-2]\d):([0-5]\d)$/, '$1.$2h');
+  }
+  function trialDate(j){
+    if(!j?.data)return '';
+    const parts=String(j.data).split('-').map(Number);
+    if(parts.length===3&&parts.every(Number.isFinite)){
+      const d=new Date(parts[0],parts[1]-1,parts[2]);
+      return dayLabel(d);
+    }
+    return String(j.data);
+  }
+  function trialDetail(j){
+    const parts=[];
+    if(j?.jutjat)parts.push(String(j.jutjat));
+    if(j?.sala)parts.push(`sala ${String(j.sala)}`);
+    if(j?.procediment)parts.push(`dil. ${String(j.procediment)}`);
+    if(j?.agents)parts.push(String(j.agents));
+    return parts.join(', ');
+  }
+  function renderTrialRow(j,i,pendingLabel){
+    const top=['⚖️',trialDate(j),trialTime(j)].filter(Boolean).join(' ');
+    const detail=trialDetail(j)||pendingLabel||'';
+    return `<div class="row" onclick="openTrial(${i})" style="cursor:pointer"><div class="grow"><strong>${esc(top)}</strong><small>${esc(detail)}</small></div><span class="chip warn">Per cobrar</span></div>`;
+  }
 
   function addSpecialFields(){
     if(document.getElementById('specialPayFields'))return;
@@ -65,12 +94,14 @@
   function renderTodayExtras(){
     const st=S(),box=document.getElementById('todayCard');
     if(!st||!box||typeof todayKey!=='function')return;
+    const old=box.querySelector('[data-home-today-extra]');
+    if(old)old.remove();
     const k=todayKey(),r=st.registres?.[k];
     if(!r?.noteIcon)return;
     const html=renderDayIconRow(k,r,false);
     if(!html)return;
     const wrap=document.createElement('div');
-    wrap.className='section';
+    wrap.setAttribute('data-home-today-extra','1');
     wrap.innerHTML='<div class="card-title">Avui</div>'+html;
     box.appendChild(wrap);
   }
@@ -79,13 +110,16 @@
     const st=S(),box=document.getElementById('upcoming');
     if(!st||!box||typeof todayKey!=='function')return;
     const today=todayKey();
-    const trials=st.judicis.map((j,i)=>({...j,i})).filter(j=>j.data&&j.data>today&&!j.celebrat).sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).slice(0,5);
+    const trials=st.judicis.map((j,i)=>({...j,i})).filter(j=>j.data&&j.data>today&&!trialHeld(j)).sort((a,b)=>(a.data+(a.hora||'')).localeCompare(b.data+(b.hora||''))).slice(0,5);
     const icons=[];
     for(let i=1;i<61;i++){
       const d=new Date();d.setDate(d.getDate()+i);const k=typeof key==='function'?key(d):'';const r=st.registres[k];
       if(r?.noteIcon)icons.push({d,k,r});
     }
-    let html=trials.map(j=>`<div class="row" onclick="openTrial(${j.i})"><div class="grow"><strong>⚖️ ${esc(j.jutjat||'Judici')} · ${j.hora||''}</strong><small>${j.data} · ${esc(j.procediment||'')}</small></div><span class="chip ${j.cobrament?'ok':'warn'}">${j.cobrament?'Cobrat':'Pendent'}</span></div>`).join('');
+    let html=trials.map(j=>{
+      const top=['⚖️',trialDate(j),trialTime(j)].filter(Boolean).join(' ');
+      return `<div class="row" onclick="openTrial(${j.i})"><div class="grow"><strong>${esc(top)}</strong><small>${esc(trialDetail(j))}</small></div><span class="chip ${trialPaid(j)?'ok':'warn'}">${trialPaid(j)?'Cobrat':'Pendent'}</span></div>`;
+    }).join('');
     html+=icons.slice(0,5).map(o=>renderDayIconRow(o.k,o.r,true)).join('');
     box.innerHTML=html||'<div class="empty">No hi ha judicis ni dies programats.</div>';
   }
@@ -95,14 +129,15 @@
     if(!st||!box)return;
     const items=[];
     st.judicis.forEach((j,i)=>{
-      if(j.celebrat&&!j.cobrament){items.push(`<div class="row" onclick="openTrial(${i})" style="cursor:pointer"><div class="grow"><strong>⚖️ ${esc(j.jutjat||'Judici')} · ${j.data||'sense data'}</strong><small>Pendent de cobrament</small></div><span class="chip warn">Per cobrar</span></div>`)}
+      if(trialHeld(j)&&!trialPaid(j))items.push(renderTrialRow(j,i,'Pendent de cobrament'));
     });
     Object.entries(st.registres||{}).forEach(([k,r])=>{
       /* Les hores extres NO són una acció pendent. Només s'hi mostra el dia si l'usuari ha marcat explícitament cobrament especial. */
       if(r?.pagamentEspecial&&!r?.pagamentEspecialCobrat){
         const d=typeof parseKey==='function'?parseKey(k):null;
         const label=dayLabel(d)||k;
-        items.push(`<div class="row" onclick="openDay('${k}')" style="cursor:pointer"><div class="grow"><strong>💶 ${label} · Cobrament especial</strong><small>Pendent de cobrament</small></div><span class="chip warn">Per cobrar</span></div>`);
+        const obs=observation(r);
+        items.push(`<div class="row" onclick="openDay('${k}')" style="cursor:pointer"><div class="grow"><strong>💶 ${esc(label)}</strong><small>${esc(obs||'Cobrament especial pendent')}</small></div><span class="chip warn">Per cobrar</span></div>`);
       }
     });
     box.innerHTML=items.length?items.join(''):'<div class="empty">Tot al dia.</div>';
