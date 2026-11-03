@@ -22,7 +22,47 @@ function addSpecialFields(){if(document.getElementById('specialPayFields'))retur
 function patchDay(){addSpecialFields();if(window.__specialDayPatched||!window.openDay)return;const oldOpen=window.openDay,oldSave=window.saveDay;window.openDay=function(k){oldOpen.apply(this,arguments);setTimeout(()=>{const r=S()?.registres?.[k]||{};const a=document.getElementById('daySpecialPay'),b=document.getElementById('daySpecialPaid'),w=document.getElementById('daySpecialPaidWrap');if(a){a.checked=special(r);if(w)w.style.display=a.checked?'block':'none'}if(b)b.checked=specialPaid(r)},0)};if(oldSave){window.saveDay=function(){const k=typeof editingDay!=='undefined'?editingDay:null;const a=document.getElementById('daySpecialPay'),b=document.getElementById('daySpecialPaid');const sp=!!a?.checked,sc=sp&&!!b?.checked;oldSave.apply(this,arguments);const st=S();if(k!=null&&st?.registres?.[k]){st.registres[k].pagamentEspecial=sp;st.registres[k].pagamentEspecialCobrat=sc;try{save()}catch(e){}}setTimeout(()=>{renderPending();renderUpcoming()},0)}}window.__specialDayPatched=true}
 function patchHome(){if(window.__homeSummaryPatched||!window.renderHome)return;const old=window.renderHome;window.renderHome=function(){old.apply(this,arguments);renderUpcoming();renderPending()};window.__homeSummaryPatched=true}
 function patchRenderAll(){if(window.__homeRenderAllPatched||!window.renderAll)return;const old=window.renderAll;window.renderAll=function(){old.apply(this,arguments);renderUpcoming();renderPending()};window.__homeRenderAllPatched=true}
-function refresh(){try{addSpecialFields();patchDay();patchHome();patchRenderAll();renderUpcoming();renderPending()}catch(e){}}
+
+/* Manual d'ús actualitzat. Es manté aquí perquè el manual evolucioni sense tocar les dades de l'usuari. */
+function updateManual(){
+  if(window.__manualUpdated)return;
+  const box=document.querySelector('.manual');
+  if(!box)return;
+  box.innerHTML=`
+<details><summary>1. Què és aquesta app</summary><div class="manual-body">
+<p><strong>Registre Horari</strong> és una eina personal per controlar la jornada, hores, permisos, nits, acumulades i judicis.</p>
+<p>L'app treballa amb el còmput anual de <strong>1580 hores efectives</strong> i permet conservar l'històric de diferents anys.</p>
+<p>Les dades es poden guardar localment i, si el compte Firebase està configurat, <strong>sincronitzar-les entre dispositius</strong>.</p>
+</div></details>
+<details><summary>2. Pantalla d'inici</summary><div class="manual-body">
+<ul><li><strong>Avui:</strong> mostra el registre del dia actual i permet editar-lo.</li><li><strong>Pròxim:</strong> mostra només judicis futurs i dies futurs amb icona. El dia actual no hi entra.</li><li><strong>Accions pendents:</strong> mostra només <strong>judicis celebrats i encara no cobrats</strong> i <strong>dies marcats amb cobrament especial que encara no s'han cobrat</strong>.</li><li>Les hores extres, per si soles, <strong>no</strong> generen una acció pendent.</li><li>Els resums es poden tocar per consultar el detall.</li></ul>
+</div></details>
+<details><summary>3. Com registrar un dia</summary><div class="manual-body">
+<p>1. Toca un dia al calendari/setmana o prem <strong>＋ Registrar</strong>.<br>2. Tria el tipus de registre.<br>3. Si és treball, tria el torn i indica entrada/sortida. Les hores es calculen automàticament.<br>4. Pots seleccionar una <strong>icona</strong> i escriure una <strong>nota</strong>.<br>5. Desa.</p>
+<p>La informació escrita a <strong>Notes</strong> és la que apareix als resums quan correspon; no es mostra cap text genèric d'"observació" si no has escrit res.</p>
+<p>Amb la <strong>selecció múltiple</strong> pots aplicar un mateix registre a diversos dies.</p>
+</div></details>
+<details><summary>4. Cobrament especial d'un dia</summary><div class="manual-body">
+<p>En registrar una jornada de treball pots marcar <strong>«Aquest dia té cobrament especial»</strong>.</p><p>Quan ho marques apareix <strong>«Cobrament especial cobrat»</strong>.</p><ul><li>Marcat especial + no cobrat → apareix a <strong>Accions pendents</strong>.</li><li>Marcat especial + cobrat → deixa d'aparèixer a pendents.</li><li>Si no marques cobrament especial, el dia <strong>no</strong> apareix a pendents encara que tingui més hores de les previstes.</li></ul>
+</div></details>
+<details><summary>5. Judicis</summary><div class="manual-body">
+<p>A <strong>Judicis</strong> pots registrar data, hora, jutjat, sala, procediment i agents, i marcar si el judici s'ha celebrat i si s'ha cobrat.</p>\p><p>El resum utilitza aquest format:</p><p><strong>⚖️ Dj 5 Novembre 18.30h</strong><br><span class="hint">Ins. 18, sala 221, dil. 1234/2024, TIP 2342</span></p><ul><li><strong>Judici futur:</strong> apareix a Pròxim.</li><li><strong>Judici celebrat però no cobrat:</strong> apareix a Accions pendents.</li><li><strong>Judici cobrat:</strong> ja no apareix a Accions pendents.</li></ul>
+</div></details>
+<details><summary>6. Còmput general (1580 h)</summary><div class="manual-body">
+<p>Al còmput general entren treball, assumptes personals, Dies Blaus i baixa. El torn «Festa» resta hores.</p><p>Vacances, GNP, ús d'acumulades i hores extres tenen els seus propis comptadors i no s'afegeixen directament al còmput general.</p>
+</div></details>
+<details><summary>7. Torn de matí</summary><div class="manual-body"><p>El marc és de <strong>7,5 h</strong>, però la jornada habitual 07:00–15:00 computa <strong>8 h</strong> al general i genera <strong>0,5 h</strong> d'acumulades respecte al marc.</p></div></details>
+<details><summary>8. Nits (22:00–06:00)</summary><div class="manual-body"><p>Al comptador de nits només es compten les hores entre <strong>22:00 i 06:00</strong>. La resta del torn va al còmput general.</p></div></details>
+<details><summary>9. Vacances, AP, Dies Blaus, GNP i extres</summary><div class="manual-body"><ul><li><strong>Vacances:</strong> resten del bo de vacances.</li><li><strong>Assumptes personals:</strong> resten del bo d'AP i del còmput general.</li><li><strong>Dies Blaus:</strong> resten del bo i del còmput general.</li><li><strong>GNP:</strong> només del bo GNP.</li><li><strong>Hores acumulades:</strong> ús contra el saldo d'acumulades.</li><li><strong>Hores extres:</strong> només al comptador d'extres.</li></ul></div></details>
+<details><summary>10. Calendari, setmana i resum mensual</summary><div class="manual-body"><ul><li><strong>Calendari:</strong> vista mensual amb colors i icones.</li><li><strong>Resum mensual:</strong> llista ordenada dels dies i les hores.</li><li><strong>Setmana:</strong> mostra els dies de la setmana i el balanç d'hores.</li></ul></div></details>
+<details><summary>11. Acumulades</summary><div class="manual-body"><p><strong>Saldo d'acumulades = inicials + hores generades − hores utilitzades.</strong> Toca la targeta d'acumulades per veure els moviments.</p></div></details>
+<details><summary>12. Permisos</summary><div class="manual-body"><p>La pestanya <strong>Permisos</strong> permet buscar i filtrar llicències, permisos i reduccions. La informació és orientativa i no substitueix la normativa oficial ni ATRI.</p></div></details>
+<details><summary>13. Dades, còpies i sincronització</summary><div class="manual-body"><ul><li><strong>Exportar JSON:</strong> crea una còpia completa.</li><li><strong>Importar JSON:</strong> recupera una còpia; es fa una còpia local abans de substituir dades.</li><li><strong>CSV/PDF:</strong> permet consultar o arxivar la informació.</li><li>Si hi ha compte configurat, la sincronització Firebase manté les dades entre dispositius.</li></ul><p><strong>No esborres les dades del navegador sense haver exportat una còpia.</strong></p></div></details>
+<details><summary>14. Mode fosc, recordatoris i instal·lació</summary><div class="manual-body"><ul><li><strong>Mode fosc:</strong> Auto, Clar o Fosc.</li><li><strong>Recordatori diari:</strong> pot avisar si encara no has registrat la jornada.</li><li><strong>PWA:</strong> pots instal·lar l'app al dispositiu per utilitzar-la com una aplicació.</li></ul></div></details>
+`;
+  window.__manualUpdated=true;
+}
+function refresh(){try{addSpecialFields();patchDay();patchHome();patchRenderAll();updateManual();renderUpcoming();renderPending()}catch(e){}}
 function boot(){refresh();[100,500,1500,3000,6000].forEach(n=>setTimeout(refresh,n));setInterval(refresh,5000)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
