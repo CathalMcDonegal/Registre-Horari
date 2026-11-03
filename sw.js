@@ -1,6 +1,6 @@
 // Service Worker de recuperació: no intercepta ni modifica cap petició.
 // Es manté temporalment per substituir versions anteriors que podien bloquejar l'app.
-const CACHE='registre-horari-recovery-v64';
+const CACHE='registre-horari-recovery-v65';
 self.addEventListener('install', event => {
   event.waitUntil(self.skipWaiting());
 });
