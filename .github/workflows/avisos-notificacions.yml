@@ -1,0 +1,36 @@
+name: Avisos de Registre Horari
+on:
+  schedule:
+    - cron: '0 18,19 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  send-reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Firebase Admin
+        run: npm install --no-save firebase-admin
+      - name: Send tomorrow reminders
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          node <<'NODE'
+          const admin = require('firebase-admin');
+          const key = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+          if (!key.project_id || !key.private_key) throw new Error('Falta el secret FIREBASE_SERVICE_ACCOUNT o el JSON no és vàlid.');
+          admin.initializeApp({credential: admin.credential.cert(key)});
+          const db=admin.firestore(), messaging=admin.messaging(), now=new Date();
+          const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hour:'2-digit',hourCycle:'h23'}).formatToParts(now);
+          if(Number(parts.find(x=>x.type==='hour').value)!==20){console.log('No són les 20:00 a Europe/Madrid; s’omet.');process.exit(0);}
+          const local=new Date(now.toLocaleString('en-US',{timeZone:'Europe/Madrid'}));local.setDate(local.getDate()+1);
+          const y=local.getFullYear(),m=String(local.getMonth()+1).padStart(2,'0'),d=String(local.getDate()).padStart(2,'0'),dateKey=y+'-'+m+'-'+d;
+          const niceDate=new Intl.DateTimeFormat('ca-ES',{timeZone:'Europe/Madrid',weekday:'long',day:'numeric',month:'long'}).format(new Date(y,local.getMonth(),local.getDate(),12));
+          const users=await db.collection('usuaris').get();let sent=0,skipped=0;
+          for(const user of users.docs){const base=user.ref.collection('dades');const [stateSnap,pushSnap]=await Promise.all([base.doc('estat').get(),base.doc('push').get()]);if(!stateSnap.exists||!pushSnap.exists){skipped++;continue;}const state=JSON.parse(stateSnap.data().json||'{}'),record=state.registres&&state.registres[dateKey],icon=record&&record.noteIcon,tokens=pushSnap.data().tokens||[];if(!icon||!tokens.length){skipped++;continue;}const shown=icon==='red_plus'?'➕':icon;const response=await messaging.sendEachForMulticast({tokens,notification:{title:'Recordatori per demà',body:shown+' Tens una data programada: '+niceDate+'.'},data:{date:dateKey,tag:'rh-'+dateKey},webpush:{notification:{icon:'https://cathalmcdonegal.github.io/Registre-Horari/app-icon.png',tag:'rh-'+dateKey},fcmOptions:{link:'https://cathalmcdonegal.github.io/Registre-Horari/'}}});sent+=response.successCount;const invalid=[];response.responses.forEach((r,i)=>{if(!r.success&&['messaging/registration-token-not-registered','messaging/invalid-registration-token'].includes(r.error?.code))invalid.push(tokens[i]);});if(invalid.length)await base.doc('push').set({tokens:admin.firestore.FieldValue.arrayRemove(...invalid)},{merge:true});}
+          console.log('Data '+dateKey+'; notificacions enviades: '+sent+'; usuaris sense avís: '+skipped);
+          NODE
