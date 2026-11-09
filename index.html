@@ -393,6 +393,7 @@ html.dark .chip.neu{background:#1e293b;color:#cbd5e1}
   <div class="card" id="accountCard" style="display:none"><div class="card-title">Compte i sincronització</div>
     <div class="row"><div class="grow"><strong id="syncEmail">—</strong><small id="syncStatus">—</small></div></div>
     <div class="actions" style="margin-top:10px"><button class="btn secondary" onclick="RHSync.syncNow()">Sincronitzar ara</button><button class="btn danger" onclick="RHSync.logout()">Tancar sessió</button></div>
+    <div class="actions" style="margin-top:10px"><button class="btn secondary" id="pushEnableBtn" onclick="enablePush()">Activar notificacions</button></div><small class="hint" id="pushStatus">Avisos de dates amb icona.</small>
     <p class="hint" style="margin-top:10px">Les dades queden lligades al teu compte: en iniciar sessió en un altre dispositiu apareixen les mateixes. Una altra persona amb el seu propi compte té les seves dades separades.</p>
   </div>
   <div class="card"><div class="card-title">Configuració</div>
@@ -1534,7 +1535,9 @@ updateInstallBanner();
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <script src="sync.js"></script>
+<script src="push-client.js?v=1"></script>
 <script src="hours-auto.js?v=65"></script>
 <script src="home-actions.js?v=65"></script>
 </body>
