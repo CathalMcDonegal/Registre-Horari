@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '0 18,19 * * *'
 permissions:
   contents: write
 jobs:
@@ -31,3 +33,124 @@ jobs:
           git add index.html
           git diff --cached --quiet || git commit -m "Update Registre Horari index to v2.3"
           git push
+
+
+  notifications:
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[test-notificacions]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Firebase Admin
+        run: npm install --no-save firebase-admin
+      - name: Send notification
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          node <<'NODE'
+          const admin = require('firebase-admin');
+
+          async function main() {
+            const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+            if (!raw) throw new Error('Falta el secret FIREBASE_SERVICE_ACCOUNT.');
+            const key = JSON.parse(raw);
+            admin.initializeApp({ credential: admin.credential.cert(key) });
+            const db = admin.firestore();
+            const messaging = admin.messaging();
+            const users = await db.collection('usuaris').get();
+            let sent = 0, skipped = 0, failed = 0;
+
+            const testMode = process.env.EVENT_NAME === 'push';
+            let dateKey = '';
+            let niceDate = '';
+
+            if (!testMode) {
+              const now = new Date();
+              const parts = new Intl.DateTimeFormat('en-GB', {
+                timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit',
+                day: '2-digit', hour: '2-digit', hourCycle: 'h23'
+              }).formatToParts(now);
+              const part = type => parts.find(x => x.type === type)?.value;
+              if (Number(part('hour')) !== 20) {
+                console.log('Control horari: encara no són les 20 h a Catalunya; no s’envia cap avís.');
+                return;
+              }
+              const tomorrow = new Date(Date.UTC(
+                Number(part('year')), Number(part('month')) - 1, Number(part('day')) + 1
+              ));
+              const y = tomorrow.getUTCFullYear();
+              const m = String(tomorrow.getUTCMonth() + 1).padStart(2, '0');
+              const d = String(tomorrow.getUTCDate()).padStart(2, '0');
+              dateKey = `${y}-${m}-${d}`;
+              niceDate = new Intl.DateTimeFormat('ca-ES', {
+                timeZone: 'Europe/Madrid', weekday: 'long', day: 'numeric', month: 'long'
+              }).format(new Date(Date.UTC(y, tomorrow.getUTCMonth(), tomorrow.getUTCDate(), 12)));
+            }
+
+            for (const user of users.docs) {
+              try {
+                const base = user.ref.collection('dades');
+                const [stateSnap, pushSnap] = await Promise.all([
+                  base.doc('estat').get(), base.doc('push').get()
+                ]);
+                if (!pushSnap.exists) { skipped++; continue; }
+                const tokens = [...new Set(pushSnap.data().tokens || [])].filter(Boolean);
+                if (!tokens.length) { skipped++; continue; }
+
+                let body;
+                if (testMode) {
+                  body = 'Aquesta és una notificació de prova. Les notificacions del calendari ja estan connectades.';
+                } else {
+                  if (!stateSnap.exists) { skipped++; continue; }
+                  const rawState = stateSnap.data().json;
+                  const state = typeof rawState === 'string' ? JSON.parse(rawState) : (rawState || {});
+                  const record = state.registres?.[dateKey];
+                  const icon = record?.noteIcon;
+                  if (!icon) { skipped++; continue; }
+                  const shown = icon === 'red_plus' ? '➕' : String(icon);
+                  body = shown + ' Tens una data programada: ' + niceDate + '.';
+                }
+
+                const message = {
+                  notification: {
+                    title: testMode ? 'Prova de notificacions · Registre Horari' : 'Recordatori per demà',
+                    body
+                  },
+                  data: { date: dateKey, tag: testMode ? 'rh-test-' + Date.now() : 'rh-' + dateKey },
+                  webpush: {
+                    notification: {
+                      icon: 'https://cathalmcdonegal.github.io/Registre-Horari/app-icon.png',
+                      tag: testMode ? 'rh-test-' + Date.now() : 'rh-' + dateKey
+                    },
+                    fcmOptions: { link: 'https://cathalmcdonegal.github.io/Registre-Horari/' }
+                  }
+                };
+
+                for (let i = 0; i < tokens.length; i += 500) {
+                  const response = await messaging.sendEachForMulticast({
+                    ...message, tokens: tokens.slice(i, i + 500)
+                  });
+                  sent += response.successCount;
+                  failed += response.failureCount;
+                  response.responses.forEach(result => {
+                    if (!result.success) console.log('Error FCM:', result.error?.code || result.error?.message || 'desconegut');
+                  });
+                }
+              } catch (error) {
+                failed++;
+                console.error('Error processant usuari ' + user.id + ':', error.message || error);
+              }
+            }
+            console.log('Mode: ' + (testMode ? 'prova' : 'recordatoris'));
+            console.log('Data objectiu: ' + (dateKey || 'prova'));
+            console.log('Notificacions enviades: ' + sent);
+            console.log('Dispositius omesos: ' + skipped);
+            console.log('Errors: ' + failed);
+          }
+
+          main().catch(error => { console.error(error); process.exit(1); });
+          NODE
